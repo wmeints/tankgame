@@ -160,7 +160,7 @@ gh pr create \
 rm -f "$BODY"
 ```
 
-- **Title**: concise, imperative, specific to the change (e.g. "Add Hybrid evolution from Destroyer"). Do not invent a generic title.
+- **Title**: a Conventional Commits subject, concise, imperative and specific to the change (e.g. "feat(tanks): add Hybrid evolution from Destroyer"). Commits on the branch must use the same format; the lefthook commit-msg hook rejects anything else. Do not invent a generic title.
 - If the branch is not yet pushed, push it first: `git push -u origin <head>`.
 - If `--base` cannot be determined confidently, ask the user before creating the PR.
 - After creation, `gh pr create` prints the PR URL.

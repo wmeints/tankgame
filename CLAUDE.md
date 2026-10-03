@@ -21,7 +21,7 @@ uv run ty check                                          # type check
 uv run --group build pyinstaller packaging/tankgame.spec # standalone build in dist/
 ```
 
-`mise install` also installs lefthook and its git hooks (`lefthook.yml`). The pre-commit hook runs ruff check, ruff format --check, ty check and pytest. The commit-msg hook requires Conventional Commits (`feat(scope): subject`; merge and revert messages pass). The pre-push hook runs the headless `--simulate 3000` smoke test.
+`mise install` also installs lefthook and its git hooks (`lefthook.yml`). The pre-commit hook runs ruff check, ruff format --check, ty check and pytest on the working tree, not only the staged changes. The commit-msg hook requires Conventional Commits (`type(scope)!: subject`, with optional scope and `!`; merge and revert messages pass). The pre-push hook runs the headless `--simulate 3000` smoke test.
 
 `.github/workflows/pr.yml` runs ruff (check + format), `ty check`, pytest and `--simulate 3000` on every pull request and push to `main`. `.github/workflows/release.yml` runs on `v*` tags (the tag must match the `pyproject.toml` version). It builds the PyInstaller executables on Windows, macOS and Linux and the wheel, smoke-tests each with `--simulate 3000`, and only then publishes a GitHub Release. The game has no asset files, so the spec in `packaging/` needs no data-file config. If you add assets, add them to the spec too.
 

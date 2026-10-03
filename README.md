@@ -28,7 +28,7 @@ tankgame
 ## Developer setup (one time, needs internet)
 
 ```bash
-mise install          # installs uv (see mise.toml)
+mise install          # installs uv and lefthook, and sets up the git hooks (lefthook.yml)
 uv sync               # creates .venv with Python 3.14 + pygame-ce
 ```
 
