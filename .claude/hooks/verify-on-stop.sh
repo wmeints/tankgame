@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop: if Python code changed since HEAD, run ruff, the unit tests and the
+# Stop: if Python code changed since HEAD, run ruff, ty, the unit tests and the
 # headless smoke test. On failure, send Claude back to fix it (once per stop attempt).
 input=$(cat)
 cd "$CLAUDE_PROJECT_DIR" || exit 0
@@ -15,6 +15,9 @@ if ! out=$(uv run --quiet ruff check --output-format concise . 2>&1); then
 fi
 if ! out=$(uv run --quiet ruff format --check . 2>&1); then
   fail+=$'ruff format --check failed (run: uv run ruff format .):\n'"$(tail -n 40 <<<"$out")"$'\n'
+fi
+if ! out=$(uv run --quiet ty check --output-format concise 2>&1); then
+  fail+=$'ty check failed:\n'"$(tail -n 40 <<<"$out")"$'\n'
 fi
 if ! out=$(uv run --quiet pytest -q -x 2>&1); then
   fail+=$'pytest failed:\n'"$(tail -n 40 <<<"$out")"$'\n'

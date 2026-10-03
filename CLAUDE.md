@@ -52,7 +52,7 @@ Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12
 ## Agent harness (`.claude/`)
 
 `.claude/settings.json` sets up the following guardrails:
-- **Stop hook** (`verify-on-stop.sh`): if any `.py`, `pyproject.toml` or `uv.lock` file differs from HEAD, it runs `ruff check`, `ruff format --check`, `pytest` and `--simulate 3000` before the turn ends. If either fails, it sends you back to fix it, once per stop attempt.
+- **Stop hook** (`verify-on-stop.sh`): if any `.py`, `pyproject.toml` or `uv.lock` file differs from HEAD, it runs `ruff check`, `ruff format --check`, `ty check`, `pytest` and `--simulate 3000` before the turn ends. If either fails, it sends you back to fix it, once per stop attempt.
 - **PreToolUse(Bash)** (`guard-bash.sh`): blocks launching the interactive game. The game opens a window, blocks the session, and writes the real save file. Verify with `--simulate` instead, or ask the user to play-test.
 - **PostToolUse(Edit|Write)** (`ruff-on-edit.sh`): runs `ruff format` and `ruff check --fix` on every Python file you edit, then sends back any remaining violations (including syntax errors and complexity limits) for you to fix.
 - **Permissions**: edits under `src/` and `tests/` plus test, simulate and local git commands are allowed. Dependency and `.claude/` changes need approval. Pushing branches is allowed, but force-pushes, branch deletes and pushes to `main` are denied, as are `git reset --hard`, `git clean`, `rm -rf` and writes to the real save directory.
