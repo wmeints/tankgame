@@ -1,0 +1,72 @@
+# Tank Game! (offline edition)
+
+An offline clone of the Roblox game **💥 Tank Game!** (by the 7x3 group), which is
+itself a Diep.io-style arena shooter. You shoot shapes for XP, level up to 150,
+spend stat points, evolve through a tank tree, and fight 12 computer-controlled
+tanks that stand in for the other players.
+
+## Setup (one time, needs internet)
+
+```bash
+mise install          # installs uv (see mise.toml)
+uv sync               # creates .venv with Python 3.14 + pygame-ce
+```
+
+## Play (works offline)
+
+```bash
+uv run tankgame
+```
+
+| Key | Action |
+|---|---|
+| WASD / arrows | Move |
+| Mouse | Aim |
+| Left click (hold) | Shoot |
+| F | Toggle auto fire |
+| E | Show/hide upgrades panel. Keys 1-8 spend a point |
+| Q | Evolution picker (flashes when you can evolve) |
+| Scroll wheel | Zoom |
+| R | Rebirth (at level 150) |
+| Esc | Pause |
+| F11 | Fullscreen |
+
+## How it works (same as the original)
+
+- **During a run:** shapes give XP: squares, triangles, pentagons, a big Alpha Pentagon in the center nest, and rare green *shiny* shapes that also give gems. Each level gives a stat point for one of 8 stats.
+- **Evolving:** you evolve at levels 15, 30, 42, 60, 80, 90, 105, 130 and 150. The Freezer and Grinder branches also use levels 35, 37, 47 and 55.
+- **Dying:** when you die the run starts over, but your gems are saved.
+- **Gems:** you earn them by destroying tanks, from shiny shapes and quests, and a few at the end of each run. Spend them in the **Shop**:
+  - **Stat Caps** raise the maximum points per stat, from 7 up to the original's maximum (Damage 12, Bullet Speed 13, ...).
+  - **Tanks** unlock shop-only evolutions such as Ultra-Thunder, Machinima, Double Buckshot, Smashinator and Railgun (75,000 gems, like the original).
+  - **Skins** change your tank color.
+- **Ranks:** your total score across all runs raises your rank. Rank 10 unlocks **Blast Lord**.
+- **Quests:** 3 daily quests, 2 weekly quests and a few one-time unique quests. One of the unique quests unlocks **Twinblast**.
+- **Prize Wheel:** one free spin per day, with a small chance of the **Ultraship**.
+- **Codes:** the real game's codes work here too (HEADSTART, NEWCURRENCY, HAVEFUN, TANKGAME2, ...).
+- **Rebirth:** at level 150 you can rebirth for gems and +5% XP forever.
+- **Difficulty:** pick Easy, Normal or Hard in the main menu.
+  - Easy and Normal bots won't hunt brand-new players unless they get shot first.
+  - On Easy you take half damage.
+
+The tree has 61 tanks across the Spammer, Scout, Double, Freezer/Flame, Grinder,
+Slide and Orbitron branches. Tank names, levels and paths follow the original
+game's build paths. Its exact damage and XP numbers aren't published, so those
+use Diep.io's values, scaled up to 150 levels.
+
+## Tweaking
+
+All balance numbers are plain Python data:
+
+- `src/tankgame/data/progression.py`: XP curve, stat formulas, shapes, gems, ranks, quests, codes, wheel prizes, skins
+- `src/tankgame/data/tanks.py`: every tank, its barrels, evolution level, parents and price
+- `src/tankgame/ai.py`: difficulty settings for the bots
+
+Progress is saved in `~/.local/share/tankgame/save.json`. Delete that file to start over.
+
+## Development
+
+```bash
+uv run pytest                                   # unit tests
+SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000   # headless smoke test
+```
