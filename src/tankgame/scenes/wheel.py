@@ -4,13 +4,20 @@ import random
 import pygame
 
 from .. import config as C
-from .. import meta
-from .. import ui
+from .. import meta, ui
 from ..data import progression as P
 from .menu import BackScene
 
-SEG_COLORS = [(241, 78, 84), (255, 232, 105), (118, 141, 252), (140, 255, 110),
-              (252, 160, 80), (190, 120, 240), (90, 220, 255), (255, 215, 0)]
+SEG_COLORS = [
+    (241, 78, 84),
+    (255, 232, 105),
+    (118, 141, 252),
+    (140, 255, 110),
+    (252, 160, 80),
+    (190, 120, 240),
+    (90, 220, 255),
+    (255, 215, 0),
+]
 
 
 class WheelScene(BackScene):
@@ -24,8 +31,13 @@ class WheelScene(BackScene):
         self.start = self.target = 0.0
         self.prize = None
         self.message = ""
-        self.spin_btn = ui.Button((C.SCREEN_W // 2 - 120, C.SCREEN_H - 110, 240, 64), "SPIN!",
-                                  self.spin, size=40, color=(80, 200, 100))
+        self.spin_btn = ui.Button(
+            (C.SCREEN_W // 2 - 120, C.SCREEN_H - 110, 240, 64),
+            "SPIN!",
+            self.spin,
+            size=40,
+            color=(80, 200, 100),
+        )
 
     def spin(self):
         if self.spinning or not meta.can_spin(self.profile):
@@ -70,19 +82,36 @@ class WheelScene(BackScene):
         seg = math.tau / n
         for i, (label, _k, _v, _w) in enumerate(P.WHEEL_PRIZES):
             a0 = self.angle + i * seg
-            pts = [(cx, cy)] + [(cx + math.cos(a0 + seg * k / 12) * r, cy + math.sin(a0 + seg * k / 12) * r)
-                                for k in range(13)]
+            pts = [(cx, cy)] + [
+                (cx + math.cos(a0 + seg * k / 12) * r, cy + math.sin(a0 + seg * k / 12) * r)
+                for k in range(13)
+            ]
             pygame.draw.polygon(surf, SEG_COLORS[i % len(SEG_COLORS)], pts)
             pygame.draw.polygon(surf, (60, 60, 60), pts, 3)
             mid = a0 + seg / 2
-            ui.text(surf, label, 22, (cx + math.cos(mid) * r * 0.62, cy + math.sin(mid) * r * 0.62),
-                    anchor="center")
+            ui.text(
+                surf,
+                label,
+                22,
+                (cx + math.cos(mid) * r * 0.62, cy + math.sin(mid) * r * 0.62),
+                anchor="center",
+            )
         pygame.draw.circle(surf, (60, 60, 60), (cx, cy), 30)
-        pygame.draw.polygon(surf, C.WHITE, [(cx - 18, cy - r - 30), (cx + 18, cy - r - 30), (cx, cy - r + 8)])
-        pygame.draw.polygon(surf, (60, 60, 60), [(cx - 18, cy - r - 30), (cx + 18, cy - r - 30),
-                                                 (cx, cy - r + 8)], 3)
+        pygame.draw.polygon(
+            surf, C.WHITE, [(cx - 18, cy - r - 30), (cx + 18, cy - r - 30), (cx, cy - r + 8)]
+        )
+        pygame.draw.polygon(
+            surf,
+            (60, 60, 60),
+            [(cx - 18, cy - r - 30), (cx + 18, cy - r - 30), (cx, cy - r + 8)],
+            3,
+        )
         free = prof["last_free_spin"] != meta.today()
-        info = "Free daily spin available!" if free else f"Spins: {prof['spins']}  (free spin again tomorrow)"
+        info = (
+            "Free daily spin available!"
+            if free
+            else f"Spins: {prof['spins']}  (free spin again tomorrow)"
+        )
         ui.text(surf, info, 28, (cx, 100), anchor="center")
         self.spin_btn.enabled = meta.can_spin(prof) and not self.spinning
         self.spin_btn.draw(surf)

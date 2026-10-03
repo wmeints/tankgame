@@ -3,9 +3,8 @@ import math
 import pygame
 
 from .. import config as C
-from .. import meta
+from .. import meta, ui
 from .. import render as R
-from .. import ui
 from ..data import progression as P
 from ..data.tanks import TANKS
 from .menu import BackScene
@@ -23,9 +22,14 @@ class ShopScene(BackScene):
         self.message = ""
         self.t = 0.0
         self.tab_buttons = [
-            ui.Button((C.SCREEN_W // 2 - 330 + i * 225, 100, 210, 46), name,
-                      lambda i=i: self.set_tab(i), size=28)
-            for i, name in enumerate(TABS)]
+            ui.Button(
+                (C.SCREEN_W // 2 - 330 + i * 225, 100, 210, 46),
+                name,
+                lambda i=i: self.set_tab(i),
+                size=28,
+            )
+            for i, name in enumerate(TABS)
+        ]
         self.buttons = []
         self.build()
 
@@ -42,10 +46,14 @@ class ShopScene(BackScene):
                 y = 190 + i * 62
                 cost = meta.next_cap_cost(prof, stat)
                 label = "MAXED" if cost is None else f"{cost:,}"
-                b = ui.Button((C.SCREEN_W - 380, y, 220, 48), label,
-                              lambda s=stat: self.buy_cap(s), size=28,
-                              enabled=cost is not None and prof["gems"] >= cost,
-                              color=(80, 200, 100))
+                b = ui.Button(
+                    (C.SCREEN_W - 380, y, 220, 48),
+                    label,
+                    lambda s=stat: self.buy_cap(s),
+                    size=28,
+                    enabled=cost is not None and prof["gems"] >= cost,
+                    color=(80, 200, 100),
+                )
                 self.buttons.append(b)
         elif self.tab == 1:
             for i, name in enumerate(SHOP_TANKS):
@@ -58,11 +66,18 @@ class ShopScene(BackScene):
                     label, enabled = f"{t['price']:,}", prof["gems"] >= t["price"]
                 else:
                     label, enabled = meta.lock_reason(prof, name), False
-                self.buttons.append(ui.Button((card.x + 14, card.bottom - 58, card.w - 28, 44), label,
-                                              lambda n=name: self.buy_tank(n), size=26,
-                                              enabled=enabled, color=(80, 200, 100)))
+                self.buttons.append(
+                    ui.Button(
+                        (card.x + 14, card.bottom - 58, card.w - 28, 44),
+                        label,
+                        lambda n=name: self.buy_tank(n),
+                        size=26,
+                        enabled=enabled,
+                        color=(80, 200, 100),
+                    )
+                )
         else:
-            for i, (name, col, price) in enumerate(P.SKINS):
+            for i, (name, _col, price) in enumerate(P.SKINS):
                 card = self.skin_card(i)
                 if prof["skin"] == name:
                     label, enabled = "EQUIPPED", False
@@ -70,9 +85,16 @@ class ShopScene(BackScene):
                     label, enabled = "Equip", True
                 else:
                     label, enabled = f"{price:,}", prof["gems"] >= price
-                self.buttons.append(ui.Button((card.x + 12, card.bottom - 54, card.w - 24, 42), label,
-                                              lambda n=name: self.skin(n), size=26,
-                                              enabled=enabled, color=(80, 200, 100)))
+                self.buttons.append(
+                    ui.Button(
+                        (card.x + 12, card.bottom - 54, card.w - 24, 42),
+                        label,
+                        lambda n=name: self.skin(n),
+                        size=26,
+                        enabled=enabled,
+                        color=(80, 200, 100),
+                    )
+                )
 
     def tank_card(self, i):
         col, row = i % 4, i // 4
@@ -84,7 +106,9 @@ class ShopScene(BackScene):
 
     def buy_cap(self, stat):
         if meta.buy_cap(self.profile, stat):
-            self.message = f"{P.STAT_NAMES[stat]} cap raised to {meta.stat_cap(self.profile, stat)}!"
+            self.message = (
+                f"{P.STAT_NAMES[stat]} cap raised to {meta.stat_cap(self.profile, stat)}!"
+            )
             self.game.sfx.play("gem")
             self.game.save()
         self.build()
@@ -124,8 +148,13 @@ class ShopScene(BackScene):
             b.color = C.UI_ACCENT if i == self.tab else (120, 120, 140)
             b.draw(surf)
         if self.tab == 0:
-            ui.text(surf, "Raise the max points you can put into each stat during a run.", 24,
-                    (C.SCREEN_W // 2, 165), anchor="center")
+            ui.text(
+                surf,
+                "Raise the max points you can put into each stat during a run.",
+                24,
+                (C.SCREEN_W // 2, 165),
+                anchor="center",
+            )
             for i, stat in enumerate(P.STATS):
                 y = 190 + i * 62
                 row = pygame.Rect(160, y - 4, C.SCREEN_W - 320, 56)
@@ -143,19 +172,45 @@ class ShopScene(BackScene):
                 card = self.tank_card(i)
                 ui.panel(surf, card, alpha=200)
                 owned = meta.tank_unlocked(prof, name)
-                R.draw_tank_body(surf, t, card.centerx, card.y + 80, 30, -math.pi / 4 + math.sin(self.t) * 0.3,
-                                 C.PLAYER_COLOR if owned else (150, 150, 150), spin=self.t * 3)
+                R.draw_tank_body(
+                    surf,
+                    t,
+                    card.centerx,
+                    card.y + 80,
+                    30,
+                    -math.pi / 4 + math.sin(self.t) * 0.3,
+                    C.PLAYER_COLOR if owned else (150, 150, 150),
+                    spin=self.t * 3,
+                )
                 ui.text(surf, name, 28, (card.centerx, card.y + 150), anchor="center")
-                ui.text(surf, f"Level {t['level']}", 22, (card.centerx, card.y + 176), anchor="center")
-                ui.text(surf, t["desc"], 16, (card.centerx, card.y + 200), (220, 220, 220), anchor="center")
+                ui.text(
+                    surf, f"Level {t['level']}", 22, (card.centerx, card.y + 176), anchor="center"
+                )
+                ui.text(
+                    surf,
+                    t["desc"],
+                    16,
+                    (card.centerx, card.y + 200),
+                    (220, 220, 220),
+                    anchor="center",
+                )
         else:
-            for i, (name, col, price) in enumerate(P.SKINS):
+            for i, (name, col, _price) in enumerate(P.SKINS):
                 card = self.skin_card(i)
                 ui.panel(surf, card, alpha=200)
                 color = col or R.rainbow(self.t)
-                R.draw_tank_body(surf, TANKS["Basic"], card.centerx, card.y + 80, 34, -math.pi / 4, color)
+                R.draw_tank_body(
+                    surf, TANKS["Basic"], card.centerx, card.y + 80, 34, -math.pi / 4, color
+                )
                 ui.text(surf, name, 30, (card.centerx, card.y + 160), anchor="center")
         for b in self.buttons:
             b.draw(surf)
         if self.message:
-            ui.text(surf, self.message, 30, (C.SCREEN_W // 2, C.SCREEN_H - 30), C.XP_YELLOW, anchor="center")
+            ui.text(
+                surf,
+                self.message,
+                30,
+                (C.SCREEN_W // 2, C.SCREEN_H - 30),
+                C.XP_YELLOW,
+                anchor="center",
+            )

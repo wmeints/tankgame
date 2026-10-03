@@ -53,7 +53,7 @@ def quest_event(profile: dict, event: str, amount: float = 1) -> list[str]:
     for _kind, e in all_quest_entries(profile):
         if e["done"]:
             continue
-        qid, text, ev, target, mode, reward = QUEST_DEFS[e["id"]]
+        _qid, text, ev, target, mode, reward = QUEST_DEFS[e["id"]]
         if ev != event:
             continue
         if mode == "sum":

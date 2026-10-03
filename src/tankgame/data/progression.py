@@ -12,7 +12,7 @@ REBIRTH_LEVEL = 150
 
 def xp_to_next(level: int) -> int:
     """XP needed to go from `level` to `level + 1`."""
-    return round(4 * level ** 1.6 + 10)
+    return round(4 * level**1.6 + 10)
 
 
 _TOTAL_XP = [0, 0]  # index = level, value = total score needed to reach it
@@ -67,8 +67,16 @@ STAT_COLORS = {
 }
 BASE_CAP = 7
 # Highest caps reachable by buying upgrades (from the original game's wiki).
-MAX_CAPS = {"dmg": 12, "bspd": 13, "reload": 12, "bhp": 11,
-            "maxhp": 12, "regen": 11, "speed": 13, "body": 12}
+MAX_CAPS = {
+    "dmg": 12,
+    "bspd": 13,
+    "reload": 12,
+    "bhp": 11,
+    "maxhp": 12,
+    "regen": 11,
+    "speed": 13,
+    "body": 12,
+}
 
 
 def cap_upgrade_cost(n: int) -> int:
@@ -86,7 +94,7 @@ def bullet_speed(p: int) -> float:
 
 
 def reload_time(p: int) -> float:
-    return 0.55 * 0.92 ** p
+    return 0.55 * 0.92**p
 
 
 def bullet_hp(p: int) -> float:
@@ -118,10 +126,10 @@ def tank_radius(level: int) -> float:
 
 SHAPES = {
     #            hp    xp  gems sides radius toughness body_dmg
-    "square":   dict(hp=10, xp=10, gems=0, sides=4, radius=22, toughness=5, body=2),
+    "square": dict(hp=10, xp=10, gems=0, sides=4, radius=22, toughness=5, body=2),
     "triangle": dict(hp=30, xp=25, gems=0, sides=3, radius=24, toughness=8, body=4),
     "pentagon": dict(hp=100, xp=130, gems=0, sides=5, radius=34, toughness=12, body=6),
-    "alpha":    dict(hp=3000, xp=3000, gems=50, sides=5, radius=110, toughness=30, body=15),
+    "alpha": dict(hp=3000, xp=3000, gems=50, sides=5, radius=110, toughness=30, body=15),
 }
 SHAPE_COUNTS = {"square": 320, "triangle": 140, "pentagon": 60, "alpha": 2}
 SHINY_CHANCE = 1 / 50
@@ -130,6 +138,7 @@ SHINY_GEMS = 25
 
 
 # --- Gems ------------------------------------------------------------------
+
 
 def kill_gems(victim_level: int) -> int:
     """Gems for destroying another tank (original: 5-20+ per kill)."""

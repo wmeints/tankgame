@@ -16,7 +16,7 @@ def font(size: int) -> pygame.font.Font:
     return f
 
 
-def text(surf, s, size, pos, color=C.TEXT, anchor="topleft", outline=True):
+def text(surf, s, size, pos, color=C.TEXT, anchor="topleft", outline=True):  # noqa: PLR0913, PLR0917
     f = font(size)
     img = f.render(str(s), True, color)
     rect = img.get_rect(**{anchor: pos})
@@ -61,8 +61,12 @@ class Button:
         text(surf, self.label, self.size, self.rect.center, anchor="center")
 
     def handle(self, event) -> bool:
-        if (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and self.enabled
-                and self.rect.collidepoint(event.pos)):
+        if (
+            event.type == pygame.MOUSEBUTTONDOWN
+            and event.button == 1
+            and self.enabled
+            and self.rect.collidepoint(event.pos)
+        ):
             if self.action:
                 self.action()
             return True
@@ -71,14 +75,24 @@ class Button:
 
 def gem_icon(surf, center, size=10):
     x, y = center
-    pts = [(x, y - size), (x + size * 0.8, y - size * 0.3), (x, y + size),
-           (x - size * 0.8, y - size * 0.3)]
+    pts = [
+        (x, y - size),
+        (x + size * 0.8, y - size * 0.3),
+        (x, y + size),
+        (x - size * 0.8, y - size * 0.3),
+    ]
     pygame.draw.polygon(surf, C.GEM_COLOR, pts)
     pygame.draw.polygon(surf, C.darken(C.GEM_COLOR, 0.6), pts, 2)
 
 
 def gems_label(surf, amount, pos, size=32, anchor="topleft"):
-    r = text(surf, f"{int(amount):,}", size, (pos[0] + 26, pos[1]) if anchor == "topleft" else pos,
-             color=C.GEM_COLOR, anchor=anchor)
+    r = text(
+        surf,
+        f"{int(amount):,}",
+        size,
+        (pos[0] + 26, pos[1]) if anchor == "topleft" else pos,
+        color=C.GEM_COLOR,
+        anchor=anchor,
+    )
     gem_icon(surf, (r.left - 15, r.centery), size // 3)
     return r

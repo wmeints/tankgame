@@ -18,17 +18,17 @@ def default_save_path() -> Path:
 DEFAULT_PROFILE = {
     "version": SAVE_VERSION,
     "gems": P.STARTING_GEMS,
-    "caps": {s: 0 for s in P.STATS},      # cap upgrades bought per stat
-    "unlocked_tanks": [],                  # shop / quest / wheel tanks
+    "caps": dict.fromkeys(P.STATS, 0),  # cap upgrades bought per stat
+    "unlocked_tanks": [],  # shop / quest / wheel tanks
     "skins": ["Classic"],
     "skin": "Classic",
     "difficulty": "normal",
-    "total_score": 0,                      # rank XP
+    "total_score": 0,  # rank XP
     "total_kills": 0,
     "best_score": 0,
     "best_level": 1,
     "rebirths": 0,
-    "pending_xp": 0,                       # head start for next run
+    "pending_xp": 0,  # head start for next run
     "spins": 0,
     "last_free_spin": "",
     "redeemed_codes": [],
@@ -54,7 +54,7 @@ def load(path: Path | None = None) -> dict:
     try:
         with open(path) as f:
             return migrate(json.load(f))
-    except (OSError, ValueError):
+    except OSError, ValueError:
         return copy.deepcopy(DEFAULT_PROFILE)
 
 

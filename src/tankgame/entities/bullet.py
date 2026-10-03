@@ -4,7 +4,7 @@ import math
 class Bullet:
     """A projectile. Also used for freeze/flame particles and orbiters."""
 
-    def __init__(self, owner, x, y, vx, vy, radius, damage, hp, life, kind="bullet"):
+    def __init__(self, owner, x, y, vx, vy, radius, damage, hp, life, kind="bullet"):  # noqa: PLR0913, PLR0917
         self.owner = owner
         self.x, self.y = x, y
         self.vx, self.vy = vx, vy
@@ -14,9 +14,9 @@ class Bullet:
         self.life = self.max_life = life
         self.kind = kind
         self.alive = True
-        self.hit = set()          # ids of targets already hit
-        self.cooldowns = {}       # orbiters: target id -> time until next hit
-        self.slot = 0             # orbiters: slot index
+        self.hit = set()  # ids of targets already hit
+        self.cooldowns = {}  # orbiters: target id -> time until next hit
+        self.slot = 0  # orbiters: slot index
         self.explode_radius = 0.0
 
     def update(self, dt: float) -> None:

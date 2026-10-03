@@ -41,7 +41,7 @@ class Sfx:
             }
             self.sounds = {k: pygame.mixer.Sound(buffer=v) for k, v in self.sounds.items()}
             self.enabled = True
-        except (pygame.error, NotImplementedError):
+        except pygame.error, NotImplementedError:
             self.sounds = {}
         self.cooldown = {}
 

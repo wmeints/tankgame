@@ -3,9 +3,8 @@ import math
 import pygame
 
 from .. import config as C
-from .. import meta
+from .. import meta, ui
 from .. import render as R
-from .. import ui
 from ..data import progression as P
 from ..hud import Hud
 from ..world import World
@@ -31,7 +30,7 @@ class ArenaScene(Scene):
         self.buttons = []
 
     # --- input ----------------------------------------------------------
-    def handle_event(self, e):
+    def handle_event(self, e):  # noqa: C901, PLR0912
         w = self.world
         if self.finished or self.paused:
             for b in self.buttons:
@@ -40,7 +39,11 @@ class ArenaScene(Scene):
                     return
             if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE and self.paused:
                 self.paused = False
-            if e.type == pygame.KEYDOWN and e.key in (pygame.K_RETURN, pygame.K_SPACE) and self.finished:
+            if (
+                e.type == pygame.KEYDOWN
+                and e.key in (pygame.K_RETURN, pygame.K_SPACE)
+                and self.finished
+            ):
                 self.play_again()
             return
         if e.type == pygame.KEYDOWN:
@@ -48,8 +51,12 @@ class ArenaScene(Scene):
                 self.paused = True
                 self.buttons = [
                     ui.Button((C.SCREEN_W // 2 - 140, 360, 280, 56), "Resume", self.resume),
-                    ui.Button((C.SCREEN_W // 2 - 140, 436, 280, 56), "Leave Game",
-                              self.leave, color=(200, 90, 90)),
+                    ui.Button(
+                        (C.SCREEN_W // 2 - 140, 436, 280, 56),
+                        "Leave Game",
+                        self.leave,
+                        color=(200, 90, 90),
+                    ),
                 ]
             elif e.key == pygame.K_e:
                 self.hud.stats_open = not self.hud.stats_open
@@ -79,6 +86,7 @@ class ArenaScene(Scene):
         self.world.killer_name = ""
         self.finish()
         from .menu import MenuScene
+
         self.game.goto(MenuScene(self.game))
 
     def play_again(self):
@@ -86,6 +94,7 @@ class ArenaScene(Scene):
 
     def to_menu(self):
         from .menu import MenuScene
+
         self.game.goto(MenuScene(self.game))
 
     # --- update ---------------------------------------------------------
@@ -96,8 +105,12 @@ class ArenaScene(Scene):
         p = w.player
         if not w.dead and not p.brain:
             keys = pygame.key.get_pressed()
-            p.move_x = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (keys[pygame.K_a] or keys[pygame.K_LEFT])
-            p.move_y = (keys[pygame.K_s] or keys[pygame.K_DOWN]) - (keys[pygame.K_w] or keys[pygame.K_UP])
+            p.move_x = (keys[pygame.K_d] or keys[pygame.K_RIGHT]) - (
+                keys[pygame.K_a] or keys[pygame.K_LEFT]
+            )
+            p.move_y = (keys[pygame.K_s] or keys[pygame.K_DOWN]) - (
+                keys[pygame.K_w] or keys[pygame.K_UP]
+            )
             mx, my = pygame.mouse.get_pos()
             wx, wy = self.cam.to_world(mx, my)
             p.angle = math.atan2(wy - p.y, wx - p.x)
@@ -131,7 +144,7 @@ class ArenaScene(Scene):
         ]
 
     # --- draw -----------------------------------------------------------
-    def draw(self, surf):
+    def draw(self, surf):  # noqa: C901, PLR0912
         w = self.world
         cam = self.cam
         R.draw_background(surf, cam)
@@ -165,8 +178,14 @@ class ArenaScene(Scene):
         for t, sx, sy, r in labels:
             if not t.is_player:
                 ui.text(surf, t.name, 18, (sx, sy - r - 18), anchor="center")
-                ui.text(surf, f"Lvl {t.level} {t.tank_name}", 14, (sx, sy - r - 4), (230, 230, 230),
-                        anchor="center")
+                ui.text(
+                    surf,
+                    f"Lvl {t.level} {t.tank_name}",
+                    14,
+                    (sx, sy - r - 4),
+                    (230, 230, 230),
+                    anchor="center",
+                )
             R.hp_bar(surf, sx, sy + r + 12, r * 2, t.hp / t.max_hp)
         if not self.finished:
             self.hud.draw(surf)
@@ -192,15 +211,23 @@ class ArenaScene(Scene):
         cx = C.SCREEN_W // 2
         if w.rebirthed:
             ui.text(surf, "REBIRTH!", 80, (cx, 150), C.XP_YELLOW, anchor="center")
-            ui.text(surf, f"Rebirths: {self.profile['rebirths']}  (+5% XP each)", 30, (cx, 205),
-                    anchor="center")
+            ui.text(
+                surf,
+                f"Rebirths: {self.profile['rebirths']}  (+5% XP each)",
+                30,
+                (cx, 205),
+                anchor="center",
+            )
         else:
             ui.text(surf, "You were destroyed", 64, (cx, 150), anchor="center")
             if w.killer_name:
                 ui.text(surf, f"by {w.killer_name}", 34, (cx, 200), C.ENEMY_COLOR, anchor="center")
         R.draw_tank_body(surf, p.tdef, cx, 300, 36, -math.pi / 4, p.color, spin=w.time * 3)
-        lines = [f"Score: {int(p.score):,}", f"Level {p.level} {p.tank_name}",
-                 f"Tanks destroyed: {w.run_kills}"]
+        lines = [
+            f"Score: {int(p.score):,}",
+            f"Level {p.level} {p.tank_name}",
+            f"Tanks destroyed: {w.run_kills}",
+        ]
         for i, line in enumerate(lines):
             ui.text(surf, line, 34, (cx, 380 + i * 38), anchor="center")
         y = 380 + len(lines) * 38

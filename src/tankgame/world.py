@@ -8,7 +8,7 @@ import random
 
 from . import config as C
 from . import meta
-from .ai import Brain, bot_level, random_name, DIFFICULTY
+from .ai import DIFFICULTY, Brain, bot_level, random_name
 from .data import progression as P
 from .entities.bullet import Beam, Ring
 from .entities.shape import Shape
@@ -30,7 +30,7 @@ class World:
         self.bullets = []
         self.beams: list[Beam] = []
         self.rings: list[Ring] = []
-        self.toasts = []                 # [text, ttl, color]
+        self.toasts = []  # [text, ttl, color]
         self.solids = Grid()
         self.bullet_grid = Grid()
         self.bot_respawns = []
@@ -43,9 +43,15 @@ class World:
         self._shape_tick = 0.0
 
         caps = {s: meta.stat_cap(profile, s) for s in P.STATS}
-        self.player = Tank(self, "You", *self.random_spawn(), self.skin_color(0),
-                           is_player=True, caps=caps,
-                           xp_mult=P.rebirth_xp_mult(profile["rebirths"]))
+        self.player = Tank(
+            self,
+            "You",
+            *self.random_spawn(),
+            self.skin_color(0),
+            is_player=True,
+            caps=caps,
+            xp_mult=P.rebirth_xp_mult(profile["rebirths"]),
+        )
         if autoplay:
             self.player.brain = Brain(self.player, "normal")
         self.tanks.append(self.player)
@@ -63,6 +69,7 @@ class World:
     # --- helpers --------------------------------------------------------
     def skin_color(self, t):
         from .render import rainbow
+
         for name, col, _price in P.SKINS:
             if name == self.profile.get("skin"):
                 return col if col else rainbow(t)
@@ -122,6 +129,7 @@ class World:
 
     def evolution_choices(self):
         from .data.tanks import evolution_options
+
         return evolution_options(self.player.tank_name, self.player.level)
 
     # --- events ---------------------------------------------------------
@@ -184,13 +192,16 @@ class World:
                 self.quest("kill")
         if victim.is_player:
             self.dead = True
-            self.killer_name = killer.name if getattr(killer, "is_tank", False) else (
-                f"a {killer.kind}" if killer is not None else "something")
+            self.killer_name = (
+                killer.name
+                if getattr(killer, "is_tank", False)
+                else (f"a {killer.kind}" if killer is not None else "something")
+            )
             self.sfx("death")
         else:
             self.bot_respawns.append(random.uniform(3, 8))
 
-    def fire_laser(self, owner, x, y, angle, rng, damage, width):
+    def fire_laser(self, owner, x, y, angle, rng, damage, width):  # noqa: PLR0913, PLR0917
         ca, sa = math.cos(angle), math.sin(angle)
         ex, ey = x + ca * rng, y + sa * rng
         self.beams.append(Beam(x, y, ex, ey, width, C.LASER_COLOR))
@@ -231,7 +242,7 @@ class World:
         return True
 
     # --- update ---------------------------------------------------------
-    def update(self, dt):
+    def update(self, dt):  # noqa: C901, PLR0912
         self.time += dt
         if not self.dead:
             self._score_tick -= dt
@@ -277,7 +288,7 @@ class World:
         self._shape_tick -= dt
         if self._shape_tick <= 0:
             self._shape_tick = 0.5
-            counts = {k: 0 for k in P.SHAPE_COUNTS}
+            counts = dict.fromkeys(P.SHAPE_COUNTS, 0)
             for s in self.shapes:
                 counts[s.kind] += 1
             for kind, n in P.SHAPE_COUNTS.items():
@@ -290,7 +301,7 @@ class World:
             self.bot_respawns.remove(min(self.bot_respawns))
             self.spawn_bot()
 
-    def collide(self, dt):
+    def collide(self, dt):  # noqa: C901, PLR0912, PLR0915
         solids = self.solids
         solids.clear()
         for s in self.shapes:

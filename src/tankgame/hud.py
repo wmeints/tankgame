@@ -6,8 +6,7 @@ import math
 import pygame
 
 from . import config as C
-from . import meta
-from . import ui
+from . import meta, ui
 from .data import progression as P
 from .render import draw_tank_body
 
@@ -17,15 +16,15 @@ class Hud:
         self.scene = scene
         self.stats_open = False
         self.evo_open = False
-        self.stat_buttons = {}     # stat -> rect
-        self.evo_cards = []        # (rect, tank def, unlocked)
+        self.stat_buttons = {}  # stat -> rect
+        self.evo_cards = []  # (rect, tank def, unlocked)
 
     @property
     def world(self):
         return self.scene.world
 
     # --- input ----------------------------------------------------------
-    def handle_click(self, pos) -> bool:
+    def handle_click(self, pos) -> bool:  # noqa: C901
         """Returns True if the click was used by the HUD."""
         w = self.world
         if self.stats_visible():
@@ -43,8 +42,11 @@ class Hud:
                         w.player_evolve(tdef["name"])
                         self.evo_open = False
                     else:
-                        w.toast(f"{tdef['name']} is locked ({meta.lock_reason(w.profile, tdef['name'])})."
-                                " Unlock it in the Shop!", C.ENEMY_COLOR)
+                        reason = meta.lock_reason(w.profile, tdef["name"])
+                        w.toast(
+                            f"{tdef['name']} is locked ({reason}). Unlock it in the Shop!",
+                            C.ENEMY_COLOR,
+                        )
                     return True
             if self.evo_rect().collidepoint(pos):
                 return True
@@ -80,16 +82,29 @@ class Hud:
         self.draw_leaderboard(surf)
         self.draw_minimap(surf, p)
         self.draw_top_left(surf)
-        for i, (msg, ttl, col) in enumerate(reversed(w.toasts)):
+        for i, (msg, _ttl, col) in enumerate(reversed(w.toasts)):
             ui.text(surf, msg, 28, (C.SCREEN_W // 2, 120 + i * 30), col, anchor="center")
         if p.level >= P.REBIRTH_LEVEL and not w.dead:
-            ui.text(surf, "MAX LEVEL - Press R to Rebirth", 30,
-                    (C.SCREEN_W // 2, C.SCREEN_H - 120), C.XP_YELLOW, anchor="center")
+            ui.text(
+                surf,
+                "MAX LEVEL - Press R to Rebirth",
+                30,
+                (C.SCREEN_W // 2, C.SCREEN_H - 120),
+                C.XP_YELLOW,
+                anchor="center",
+            )
         if self.scene.autofire:
-            ui.text(surf, "Auto Fire: ON (F)", 22, (C.SCREEN_W // 2, C.SCREEN_H - 92), anchor="center")
+            ui.text(
+                surf, "Auto Fire: ON (F)", 22, (C.SCREEN_W // 2, C.SCREEN_H - 92), anchor="center"
+            )
         if p.immune > 0 and not w.dead:
-            ui.text(surf, f"Spawn protection {p.immune:.0f}s", 24,
-                    (C.SCREEN_W // 2, C.SCREEN_H - 150), anchor="center")
+            ui.text(
+                surf,
+                f"Spawn protection {p.immune:.0f}s",
+                24,
+                (C.SCREEN_W // 2, C.SCREEN_H - 150),
+                anchor="center",
+            )
 
     def draw_top_left(self, surf):
         w = self.world
@@ -97,8 +112,13 @@ class Hud:
             return
         ui.gems_label(surf, w.profile["gems"], (12, 14))
         r = meta.rank(w.profile)
-        ui.text(surf, f"{P.rank_name(r)}  |  {w.difficulty.title()}  |  Kills: {w.run_kills}",
-                22, (14, 44), (220, 220, 220))
+        ui.text(
+            surf,
+            f"{P.rank_name(r)}  |  {w.difficulty.title()}  |  Kills: {w.run_kills}",
+            22,
+            (14, 44),
+            (220, 220, 220),
+        )
 
     def draw_bars(self, surf, p):
         cx = C.SCREEN_W // 2
@@ -159,7 +179,9 @@ class Hud:
                 ui.text(surf, f"Next at level {nxt[0]}", 22, (rect.x + 12, rect.y + 40))
             self.evo_cards = []
             return
-        ui.text(surf, "Choose your evolution (Q to close)", 24, (rect.x + 12, rect.y + 12), C.XP_YELLOW)
+        ui.text(
+            surf, "Choose your evolution (Q to close)", 24, (rect.x + 12, rect.y + 12), C.XP_YELLOW
+        )
         self.evo_cards = []
         mouse = pygame.mouse.get_pos()
         for i, t in enumerate(opts):
@@ -170,15 +192,36 @@ class Hud:
             if card.collidepoint(mouse) and unlocked:
                 base = tuple(min(255, c + 30) for c in base)
             pygame.draw.rect(surf, base, card, border_radius=8)
-            draw_tank_body(surf, t, card.centerx, card.y + 48, 16, -math.pi / 4,
-                           w.player.color if unlocked else (150, 150, 150), spin=w.time * 3)
-            ui.text(surf, t["name"], 18 if len(t["name"]) < 12 else 16,
-                    (card.centerx, card.bottom - 26), anchor="center")
+            draw_tank_body(
+                surf,
+                t,
+                card.centerx,
+                card.y + 48,
+                16,
+                -math.pi / 4,
+                w.player.color if unlocked else (150, 150, 150),
+                spin=w.time * 3,
+            )
+            ui.text(
+                surf,
+                t["name"],
+                18 if len(t["name"]) < 12 else 16,
+                (card.centerx, card.bottom - 26),
+                anchor="center",
+            )
             if unlocked:
-                ui.text(surf, f"Lvl {t['level']}", 16, (card.centerx, card.bottom - 10), anchor="center")
+                ui.text(
+                    surf, f"Lvl {t['level']}", 16, (card.centerx, card.bottom - 10), anchor="center"
+                )
             else:
-                ui.text(surf, "LOCKED " + meta.lock_reason(w.profile, t["name"]), 14,
-                        (card.centerx, card.bottom - 10), C.ENEMY_COLOR, anchor="center")
+                ui.text(
+                    surf,
+                    "LOCKED " + meta.lock_reason(w.profile, t["name"]),
+                    14,
+                    (card.centerx, card.bottom - 10),
+                    C.ENEMY_COLOR,
+                    anchor="center",
+                )
             self.evo_cards.append((card, t, unlocked))
 
     def draw_leaderboard(self, surf):
@@ -205,9 +248,11 @@ class Hud:
         pygame.draw.rect(surf, (90, 90, 90), rect, 2, border_radius=4)
         px, py = rect.x + p.x * s, rect.y + p.y * s
         a = p.angle
-        pts = [(px + math.cos(a) * 7, py + math.sin(a) * 7),
-               (px + math.cos(a + 2.5) * 5, py + math.sin(a + 2.5) * 5),
-               (px + math.cos(a - 2.5) * 5, py + math.sin(a - 2.5) * 5)]
+        pts = [
+            (px + math.cos(a) * 7, py + math.sin(a) * 7),
+            (px + math.cos(a + 2.5) * 5, py + math.sin(a + 2.5) * 5),
+            (px + math.cos(a - 2.5) * 5, py + math.sin(a - 2.5) * 5),
+        ]
         pygame.draw.polygon(surf, (30, 30, 30), pts)
 
 

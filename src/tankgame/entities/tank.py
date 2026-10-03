@@ -11,7 +11,7 @@ class Tank:
     is_tank = True
     _next_id = 1
 
-    def __init__(self, arena, name, x, y, color, is_player=False, caps=None, xp_mult=1.0):
+    def __init__(self, arena, name, x, y, color, is_player=False, caps=None, xp_mult=1.0):  # noqa: PLR0913, PLR0917
         self.id = Tank._next_id
         Tank._next_id += 1
         self.arena = arena
@@ -27,8 +27,8 @@ class Tank:
 
         self.score = 0.0
         self.level = 1
-        self.points = {s: 0 for s in P.STATS}
-        self.caps = caps or {s: P.BASE_CAP for s in P.STATS}
+        self.points = dict.fromkeys(P.STATS, 0)
+        self.caps = caps or dict.fromkeys(P.STATS, P.BASE_CAP)
         self.unspent = 0
         self.kills = 0
 
@@ -45,10 +45,10 @@ class Tank:
         self.alpha = 1.0
         self.still_time = 0.0
         self.orbit_phase = 0.0
-        self.orbiters = []          # Bullet or float (respawn timer)
+        self.orbiters = []  # Bullet or float (respawn timer)
         self.last_attacker = None
         self.attacked_timer = 0.0
-        self.evolutions = []        # names evolved into this run
+        self.evolutions = []  # names evolved into this run
 
         self.set_tank("Basic")
         self.hp = self.max_hp
@@ -84,7 +84,7 @@ class Tank:
         self.bullet_speed = P.bullet_speed(p["bspd"])
         self.bullet_hp = P.bullet_hp(p["bhp"])
         self.reload = P.reload_time(p["reload"])
-        self.mass = self.radius ** 2 * (2.5 if t["grinder"] else 1.5)
+        self.mass = self.radius**2 * (2.5 if t["grinder"] else 1.5)
 
     def _reload(self, barrel) -> float:
         return P.reload_time(self.points["reload"]) * barrel["reload"]
@@ -117,7 +117,7 @@ class Tank:
         return True
 
     # --- simulation -----------------------------------------------------
-    def update(self, dt: float) -> None:
+    def update(self, dt: float) -> None:  # noqa: C901, PLR0912, PLR0915
         arena = self.arena
         if self.immune > 0:
             self.immune -= dt
@@ -182,8 +182,18 @@ class Tank:
             else:
                 o -= dt
                 if o <= 0:
-                    b = Bullet(self, self.x, self.y, 0, 0, self.radius * 0.45,
-                               self.bullet_damage * 0.6, self.bullet_hp * 3, 1e9, "orbiter")
+                    b = Bullet(
+                        self,
+                        self.x,
+                        self.y,
+                        0,
+                        0,
+                        self.radius * 0.45,
+                        self.bullet_damage * 0.6,
+                        self.bullet_hp * 3,
+                        1e9,
+                        "orbiter",
+                    )
                     b.slot = i
                     self.orbiters[i] = b
                     arena.bullets.append(b)
@@ -213,20 +223,33 @@ class Tank:
         a, mx, my = self.muzzle(b)
         if b["kind"] == "laser":
             rng = 900 * b["range"]
-            arena.fire_laser(self, mx, my, a, rng, self.bullet_damage * b["dmg"],
-                             b["width"] * self.radius)
+            arena.fire_laser(
+                self, mx, my, a, rng, self.bullet_damage * b["dmg"], b["width"] * self.radius
+            )
         else:
             for _ in range(b["pellets"]):
                 sa = a + math.radians(random.uniform(-b["spread"], b["spread"]) / 2)
-                spd = self.bullet_speed * b["speed"] * (random.uniform(0.85, 1.1) if b["pellets"] > 1 else 1)
+                spd = (
+                    self.bullet_speed
+                    * b["speed"]
+                    * (random.uniform(0.85, 1.1) if b["pellets"] > 1 else 1)
+                )
                 radius = b["width"] * self.radius * 0.5 * b["size"]
                 life = 1.4 * b["range"]
                 if b["kind"] in ("freeze", "flame"):
                     radius *= 0.6
-                bl = Bullet(self, mx, my, math.cos(sa) * spd + self.vx * 0.3,
-                            math.sin(sa) * spd + self.vy * 0.3, radius,
-                            self.bullet_damage * b["dmg"], self.bullet_hp * b["bhp"],
-                            life, b["kind"])
+                bl = Bullet(
+                    self,
+                    mx,
+                    my,
+                    math.cos(sa) * spd + self.vx * 0.3,
+                    math.sin(sa) * spd + self.vy * 0.3,
+                    radius,
+                    self.bullet_damage * b["dmg"],
+                    self.bullet_hp * b["bhp"],
+                    life,
+                    b["kind"],
+                )
                 if b["kind"] == "rocket":
                     bl.explode_radius = 70 * b["size"] + self.radius
                 arena.bullets.append(bl)

@@ -4,11 +4,11 @@ SCREEN_W, SCREEN_H = 1280, 800
 FPS = 60
 DT = 1.0 / FPS
 
-ARENA_SIZE = 6000          # world is ARENA_SIZE x ARENA_SIZE, origin top-left
-NEST_RADIUS = 900          # pentagon nest in the middle of the map
-GRID_CELL = 128            # spatial hash cell size
+ARENA_SIZE = 6000  # world is ARENA_SIZE x ARENA_SIZE, origin top-left
+NEST_RADIUS = 900  # pentagon nest in the middle of the map
+GRID_CELL = 128  # spatial hash cell size
 BOT_COUNT = 12
-SPAWN_IMMUNITY = 5.0       # seconds, like the original
+SPAWN_IMMUNITY = 5.0  # seconds, like the original
 
 # Diep-style palette
 BG = (205, 205, 205)

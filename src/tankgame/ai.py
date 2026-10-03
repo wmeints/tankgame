@@ -9,35 +9,96 @@ from .data.tanks import evolution_options
 
 PERSONALITIES = {
     "sniper": dict(
-        tanks=["Scout", "Hitman", "Ace", "Watcher", "Railgun", "Double Railgun", "Wrath",
-               "Fury", "Shadow", "Intruder", "Powerhouse", "Tundra"],
+        tanks=[
+            "Scout",
+            "Hitman",
+            "Ace",
+            "Watcher",
+            "Railgun",
+            "Double Railgun",
+            "Wrath",
+            "Fury",
+            "Shadow",
+            "Intruder",
+            "Powerhouse",
+            "Tundra",
+        ],
         stats=["bspd", "dmg", "reload", "bhp", "speed", "maxhp", "regen", "body"],
-        distance=550),
+        distance=550,
+    ),
     "spammer": dict(
-        tanks=["Spammer", "Thunder", "Storm", "Ultra-Thunder", "Godfather", "Blaster",
-               "Machinima", "Beastmode", "Sparta", "Eater", "Shadow", "Splitstorm",
-               "Trilord", "Orchestra"],
+        tanks=[
+            "Spammer",
+            "Thunder",
+            "Storm",
+            "Ultra-Thunder",
+            "Godfather",
+            "Blaster",
+            "Machinima",
+            "Beastmode",
+            "Sparta",
+            "Eater",
+            "Shadow",
+            "Splitstorm",
+            "Trilord",
+            "Orchestra",
+        ],
         stats=["reload", "dmg", "bhp", "bspd", "maxhp", "speed", "regen", "body"],
-        distance=330),
+        distance=330,
+    ),
     "melee": dict(
-        tanks=["Grinder", "Shredder", "Fuse", "Smashinator", "Plower", "Mega Shredder",
-               "Apollo", "Turbine"],
+        tanks=[
+            "Grinder",
+            "Shredder",
+            "Fuse",
+            "Smashinator",
+            "Plower",
+            "Mega Shredder",
+            "Apollo",
+            "Turbine",
+        ],
         stats=["body", "maxhp", "speed", "regen", "dmg", "reload", "bhp", "bspd"],
-        distance=0),
+        distance=0,
+    ),
     "heavy": dict(
-        tanks=["Double", "Triway", "Triple", "Side Triple", "Orchestra", "Eater", "Devourer",
-               "Railgun", "Spiker", "Double Spiker", "Powerhouse", "Tundra"],
+        tanks=[
+            "Double",
+            "Triway",
+            "Triple",
+            "Side Triple",
+            "Orchestra",
+            "Eater",
+            "Devourer",
+            "Railgun",
+            "Spiker",
+            "Double Spiker",
+            "Powerhouse",
+            "Tundra",
+        ],
         stats=["maxhp", "dmg", "reload", "bhp", "regen", "bspd", "speed", "body"],
-        distance=360),
+        distance=360,
+    ),
     "frost": dict(
         tanks=["Freezer", "Double Freezer", "Triple Freezer", "Mega Freezer", "Flame", "Inferno"],
         stats=["dmg", "reload", "maxhp", "speed", "regen", "bhp", "body", "bspd"],
-        distance=110),
+        distance=110,
+    ),
     "rocket": dict(
-        tanks=["Slide", "Apex", "Rocket", "Guardian", "Blast Lord", "Phoenix", "Scout",
-               "Buckshot", "Double Buckshot", "Megashot"],
+        tanks=[
+            "Slide",
+            "Apex",
+            "Rocket",
+            "Guardian",
+            "Blast Lord",
+            "Phoenix",
+            "Scout",
+            "Buckshot",
+            "Double Buckshot",
+            "Megashot",
+        ],
         stats=["dmg", "reload", "bspd", "maxhp", "speed", "bhp", "regen", "body"],
-        distance=300),
+        distance=300,
+    ),
 }
 STAT_WEIGHTS = [5, 4, 4, 3, 2, 2, 1, 1]
 
@@ -46,15 +107,50 @@ DIFFICULTY = {
     # levels lower, caps: extra stat caps, above: max bot level above the player,
     # newbie: won't hunt the player below this level (unless attacked),
     # hurt: multiplier on damage the player takes
-    "easy":   dict(aim=0.22, react=0.5, bully=15, caps=-1, above=25, newbie=20, hurt=0.5),
+    "easy": dict(aim=0.22, react=0.5, bully=15, caps=-1, above=25, newbie=20, hurt=0.5),
     "normal": dict(aim=0.09, react=0.3, bully=30, caps=0, above=45, newbie=10, hurt=0.8),
-    "hard":   dict(aim=0.03, react=0.15, bully=999, caps=2, above=75, newbie=0, hurt=1.0),
+    "hard": dict(aim=0.03, react=0.15, bully=999, caps=2, above=75, newbie=0, hurt=1.0),
 }
 
-_PRE = ["xX", "Pro", "Epic", "Mega", "Super", "Dark", "Ultra", "Noob", "Turbo", "Sir",
-        "Captain", "Sneaky", "Lil", "Big", "Toxic", "Golden", "Crazy", "Iron"]
-_MID = ["Tank", "Blaster", "Gamer", "Sniper", "Builder", "Ninja", "Dragon", "Shooter",
-        "Panda", "Destroyer", "Wolf", "Bacon", "Robo", "Rocket", "Pixel", "Cannon", "Diep"]
+_PRE = [
+    "xX",
+    "Pro",
+    "Epic",
+    "Mega",
+    "Super",
+    "Dark",
+    "Ultra",
+    "Noob",
+    "Turbo",
+    "Sir",
+    "Captain",
+    "Sneaky",
+    "Lil",
+    "Big",
+    "Toxic",
+    "Golden",
+    "Crazy",
+    "Iron",
+]
+_MID = [
+    "Tank",
+    "Blaster",
+    "Gamer",
+    "Sniper",
+    "Builder",
+    "Ninja",
+    "Dragon",
+    "Shooter",
+    "Panda",
+    "Destroyer",
+    "Wolf",
+    "Bacon",
+    "Robo",
+    "Rocket",
+    "Pixel",
+    "Cannon",
+    "Diep",
+]
 _SUF = ["", "", "_Xx", "123", "2015", "YT", "_TTV", "9000", "_Pro", "77", "_RBX", "xD"]
 
 
@@ -86,7 +182,7 @@ class Brain:
         order = self.prefs["stats"]
         while t.unspent > 0:
             best, best_score = None, None
-            for stat, w in zip(order, STAT_WEIGHTS):
+            for stat, w in zip(order, STAT_WEIGHTS, strict=True):
                 if t.points[stat] >= t.caps[stat]:
                     continue
                 score = t.points[stat] / w
@@ -124,13 +220,16 @@ class Brain:
     def visible(self, other, dist) -> bool:
         return other.alpha > 0.35 or dist < 200
 
-    def think(self) -> None:
+    def think(self) -> None:  # noqa: C901, PLR0912, PLR0915
         t = self.tank
         arena = t.arena
         hp_ratio = t.hp / t.max_hp
         view = 900 * t.tdef["fov"]
-        near_tanks = [o for o in arena.tanks if o is not t and o.alive
-                      and abs(o.x - t.x) < view and abs(o.y - t.y) < view]
+        near_tanks = [
+            o
+            for o in arena.tanks
+            if o is not t and o.alive and abs(o.x - t.x) < view and abs(o.y - t.y) < view
+        ]
         threat, threat_d = None, 1e9
         prey, prey_score = None, 1e9
         for o in near_tanks:
@@ -171,13 +270,18 @@ class Brain:
             self.mode, self.target = "farm", best
             return
         self.mode, self.target = "wander", None
-        if self.waypoint is None or math.hypot(self.waypoint[0] - t.x, self.waypoint[1] - t.y) < 150:
+        if (
+            self.waypoint is None
+            or math.hypot(self.waypoint[0] - t.x, self.waypoint[1] - t.y) < 150
+        ):
             if t.level >= 45 and random.random() < 0.6:
                 c = C.ARENA_SIZE / 2
                 self.waypoint = (c + random.uniform(-700, 700), c + random.uniform(-700, 700))
             else:
-                self.waypoint = (random.uniform(200, C.ARENA_SIZE - 200),
-                                 random.uniform(200, C.ARENA_SIZE - 200))
+                self.waypoint = (
+                    random.uniform(200, C.ARENA_SIZE - 200),
+                    random.uniform(200, C.ARENA_SIZE - 200),
+                )
 
     def update(self, dt: float) -> None:
         t = self.tank
