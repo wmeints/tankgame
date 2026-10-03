@@ -457,8 +457,9 @@ class World:
         if b.kind == "freeze":
             tank.slow_timer = 1.0
         elif b.kind == "flame":
+            old_dps = tank.burn_dps if tank.burn_timer > 0 else 0
+            tank.burn_dps = max(old_dps, b.damage * 4)
             tank.burn_timer = 2.0
-            tank.burn_dps = max(tank.burn_dps, b.damage * 4)
             tank.burn_source = b.owner
 
     def _collide_bodies(self, dt):
