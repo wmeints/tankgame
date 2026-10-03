@@ -23,9 +23,18 @@ If it reports unauthenticated, stop and tell the user to run `gh auth login`.
 
 Before opening the PR, verify the change:
 
-1. Run `task format`, `task lint` and `task test`. Run `task test:integration`
-   too when the diff touches `internal/sandbox` or `internal/daemon`. If a
-   check fails, stop and report it; don't open a PR with failing checks.
+1. Run the same checks as `.github/workflows/pr.yml`:
+
+   ```bash
+   uv run ruff check . && uv run ruff format --check .
+   uv run ty check
+   uv run pytest
+   SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000
+   ```
+
+   Run `uv run --group build pyinstaller packaging/tankgame.spec` too when the
+   diff touches `packaging/`, dependencies or assets. If a check fails, stop
+   and report it; don't open a PR with failing checks.
 2. Ask the `reviewer` agent to review the branch. Fix confirmed findings with
    the user's approval, or list the ones you leave open under **Review focus**.
 
@@ -84,6 +93,12 @@ Classify the change into exactly one of `risk:high`, `risk:medium`, `risk:low`. 
 - Documentation, comments, or config with no behavioral effect.
 - Simple, isolated, self-evidently-correct changes: a few lines, a small refactor, a typo fix, a constant rename.
 - Changes a reviewer can verify in seconds.
+
+In this repository, typical triggers are:
+
+- `high`: `save.py` file paths or JSON loading, `pyproject.toml`/`uv.lock` dependency changes, `.github/workflows/`, `packaging/`, and `.claude/` hooks or permissions.
+- `medium`: the simulation in `world.py`, `entities/` or `spatial.py`; bot behavior in `ai.py`; the evolution tree in `data/tanks.py` or balance in `data/progression.py`; `migrate()` and new profile fields; `meta.py` progression logic; the game loop or scene switching.
+- `low`: docs, comments, colors and other cosmetic constants in `config.py`, and isolated HUD or menu text tweaks.
 
 Record the chosen level and the reason. If the change sits on a boundary, choose the higher level and note the ambiguity in **Review focus**.
 
@@ -145,7 +160,7 @@ gh pr create \
 rm -f "$BODY"
 ```
 
-- **Title**: concise, imperative, specific to the change (e.g. "Add rate limiting to the auth endpoint"). Do not invent a generic title.
+- **Title**: concise, imperative, specific to the change (e.g. "Add Hybrid evolution from Destroyer"). Do not invent a generic title.
 - If the branch is not yet pushed, push it first: `git push -u origin <head>`.
 - If `--base` cannot be determined confidently, ask the user before creating the PR.
 - After creation, `gh pr create` prints the PR URL.
