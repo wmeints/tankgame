@@ -1,4 +1,7 @@
+"""Arena scene: player input, camera and drawing around a `World`."""
+
 import math
+from typing import override
 
 import pygame
 
@@ -14,6 +17,16 @@ STAT_KEYS = {pygame.K_1 + i: s for i, s in enumerate(P.STATS)}
 
 
 class ArenaScene(Scene):
+    """One arena run, from spawn to the death or rebirth screen.
+
+    Parameters
+    ----------
+    game : Game
+        The running game.
+    autoplay : bool
+        Let an AI brain control the player instead of the keyboard and mouse.
+    """
+
     def __init__(self, game, autoplay=False):
         super().__init__(game)
         meta.ensure_quests(self.profile)
@@ -30,7 +43,9 @@ class ArenaScene(Scene):
         self.buttons = []
 
     # --- input ----------------------------------------------------------
+    @override
     def handle_event(self, e):
+        """Route input to the pause/death menu, the keyboard or the mouse."""
         if self.finished or self.paused:
             self._handle_menu_event(e)
         elif e.type == pygame.KEYDOWN:
@@ -76,6 +91,7 @@ class ArenaScene(Scene):
             self.user_zoom = min(1.3, max(0.6, self.user_zoom + e.y * 0.05))
 
     def pause(self):
+        """Pause the run and show the Resume and Leave Game buttons."""
         self.paused = True
         self.buttons = [
             ui.Button((C.SCREEN_W // 2 - 140, 360, 280, 56), "Resume", self.resume),
@@ -88,9 +104,11 @@ class ArenaScene(Scene):
         ]
 
     def resume(self):
+        """Close the pause menu."""
         self.paused = False
 
     def leave(self):
+        """End the run, record it and return to the main menu."""
         self.paused = False
         self.world.dead = True
         self.world.killer_name = ""
@@ -100,15 +118,22 @@ class ArenaScene(Scene):
         self.game.goto(MenuScene(self.game))
 
     def play_again(self):
+        """Start a new run."""
         self.game.goto(ArenaScene(self.game))
 
     def to_menu(self):
+        """Return to the main menu."""
         from .menu import MenuScene
 
         self.game.goto(MenuScene(self.game))
 
     # --- update ---------------------------------------------------------
+    @override
     def update(self, dt):
+        """Apply player input, step the world and follow the player with the camera.
+
+        Does nothing while paused. Finishes the run when the player dies.
+        """
         if self.paused:
             return
         w = self.world
@@ -140,6 +165,10 @@ class ArenaScene(Scene):
         self.cam.zoom += (target_zoom - self.cam.zoom) * min(1.0, 3 * dt)
 
     def finish(self):
+        """Record the run in the profile, save, and show the end-screen buttons.
+
+        Only runs once per run.
+        """
         if self.finished:
             return
         self.finished = True
@@ -154,7 +183,9 @@ class ArenaScene(Scene):
         ]
 
     # --- draw -----------------------------------------------------------
+    @override
     def draw(self, surf):
+        """Draw the world, the HUD, and the pause or death overlay."""
         R.draw_background(surf, self.cam)
         self._draw_shapes_and_bullets(surf)
         self._draw_beams(surf)
@@ -224,6 +255,7 @@ class ArenaScene(Scene):
         R.hp_bar(surf, sx, sy + r + 12, r * 2, t.hp / t.max_hp)
 
     def draw_overlay(self, surf, title):
+        """Darken the screen and draw `title` with the current buttons."""
         shade = pygame.Surface((C.SCREEN_W, C.SCREEN_H), pygame.SRCALPHA)
         shade.fill((0, 0, 0, 140))
         surf.blit(shade, (0, 0))
@@ -232,6 +264,7 @@ class ArenaScene(Scene):
             b.draw(surf)
 
     def draw_death(self, surf):
+        """Draw the death or rebirth screen with the run summary."""
         w = self.world
         p = w.player
         shade = pygame.Surface((C.SCREEN_W, C.SCREEN_H), pygame.SRCALPHA)

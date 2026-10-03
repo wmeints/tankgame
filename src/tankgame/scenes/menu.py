@@ -1,5 +1,8 @@
+"""Main menu, the shared back-button scene, and the quests and codes screens."""
+
 import math
 import random
+from typing import override
 
 import pygame
 
@@ -31,6 +34,7 @@ class Backdrop:
         self.t = 0.0
 
     def draw(self, surf, dt=1 / 60):
+        """Advance the shapes by `dt` seconds and draw the grid and shapes."""
         self.t += dt
         surf.fill(C.BG)
         for x in range(0, C.SCREEN_W, 50):
@@ -57,6 +61,7 @@ _backdrop = None
 
 
 def backdrop():
+    """Return the shared backdrop, so it keeps drifting across menu screens."""
     global _backdrop
     if _backdrop is None:
         _backdrop = Backdrop()
@@ -64,6 +69,8 @@ def backdrop():
 
 
 class MenuScene(Scene):
+    """Title screen with the player card, controls and menu buttons."""
+
     def __init__(self, game):
         super().__init__(game)
         meta.ensure_quests(self.profile)
@@ -84,32 +91,40 @@ class MenuScene(Scene):
         self.diff_btn = self.buttons[5]
 
     def play(self):
+        """Start a new arena run."""
         from .arena import ArenaScene
 
         self.game.goto(ArenaScene(self.game))
 
     def shop(self):
+        """Open the shop."""
         from .shop import ShopScene
 
         self.game.goto(ShopScene(self.game))
 
     def quests(self):
+        """Open the quest list."""
         self.game.goto(QuestScene(self.game))
 
     def wheel(self):
+        """Open the prize wheel."""
         from .wheel import WheelScene
 
         self.game.goto(WheelScene(self.game))
 
     def codes(self):
+        """Open the code redemption screen."""
         self.game.goto(CodesScene(self.game))
 
     def cycle_diff(self):
+        """Switch to the next bot difficulty and save it."""
         i = DIFFS.index(self.profile["difficulty"])
         self.profile["difficulty"] = DIFFS[(i + 1) % 3]
         self.game.save()
 
+    @override
     def handle_event(self, e):
+        """Press a menu button, or start a run on Enter or Space."""
         for b in self.buttons:
             if b.handle(e):
                 self.game.sfx.play("click")
@@ -117,9 +132,11 @@ class MenuScene(Scene):
         if e.type == pygame.KEYDOWN and e.key in (pygame.K_RETURN, pygame.K_SPACE):
             self.play()
 
+    @override
     def update(self, dt):
         self.t += dt
 
+    @override
     def draw(self, surf):
         backdrop().draw(surf)
         prof = self.profile
@@ -185,6 +202,8 @@ class MenuScene(Scene):
 
 
 class BackScene(Scene):
+    """Menu sub-screen with a title, a back button and the gem count."""
+
     title = ""
 
     def __init__(self, game):
@@ -194,10 +213,19 @@ class BackScene(Scene):
         )
 
     def go_back(self):
+        """Save the profile and return to the main menu."""
         self.game.save()
         self.game.goto(MenuScene(self.game))
 
+    @override
     def handle_event(self, e):
+        """Handle the back button and Escape.
+
+        Returns
+        -------
+        bool
+            True when the event was consumed, so subclasses can skip it.
+        """
         if self.back.handle(e):
             self.game.sfx.play("click")
             return True
@@ -206,7 +234,9 @@ class BackScene(Scene):
             return True
         return False
 
+    @override
     def draw(self, surf):
+        """Draw the backdrop, title, back button and gem count."""
         backdrop().draw(surf)
         ui.text(surf, self.title, 64, (C.SCREEN_W // 2, 50), anchor="center")
         self.back.draw(surf)
@@ -214,8 +244,11 @@ class BackScene(Scene):
 
 
 class QuestScene(BackScene):
+    """List of daily, weekly and unique quests with their progress."""
+
     title = "Quests"
 
+    @override
     def draw(self, surf):
         super().draw(surf)
         meta.ensure_quests(self.profile)
@@ -255,6 +288,8 @@ class QuestScene(BackScene):
 
 
 class CodesScene(BackScene):
+    """Text entry for redeeming codes."""
+
     title = "Codes"
     wants_text = True
 
@@ -267,12 +302,15 @@ class CodesScene(BackScene):
         )
 
     def redeem(self):
+        """Redeem the typed code, show the result and clear the entry."""
         self.message = meta.redeem_code(self.profile, self.entry)
         self.entry = ""
         self.game.save()
         self.game.sfx.play("gem")
 
+    @override
     def handle_event(self, e):
+        """Type, erase or submit the code, on top of the back-button handling."""
         if super().handle_event(e):
             return
         if self.redeem_btn.handle(e):
@@ -286,6 +324,7 @@ class CodesScene(BackScene):
             elif e.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self.redeem()
 
+    @override
     def draw(self, surf):
         super().draw(surf)
         cx = C.SCREEN_W // 2

@@ -21,10 +21,12 @@ for _lvl in range(1, MAX_LEVEL):
 
 
 def total_xp_for_level(level: int) -> int:
+    """Return the total score needed to reach `level` (clamped to 1..MAX_LEVEL)."""
     return _TOTAL_XP[max(1, min(level, MAX_LEVEL))]
 
 
 def level_for_xp(xp: float) -> int:
+    """Return the level reached with a total score of `xp`."""
     level = 1
     while level < MAX_LEVEL and xp >= _TOTAL_XP[level + 1]:
         level += 1
@@ -85,23 +87,30 @@ def cap_upgrade_cost(n: int) -> int:
 
 
 def bullet_damage(p_dmg: int, p_bhp: int) -> float:
-    # Bullet Health also adds a little damage (hidden effect in the original).
+    """Return bullet damage for the Damage and Bullet Health stat points.
+
+    Bullet Health also adds a little damage (hidden effect in the original).
+    """
     return (7 + 3 * p_dmg) * (1 + 0.04 * p_bhp)
 
 
 def bullet_speed(p: int) -> float:
+    """Return bullet speed in pixels per second for `p` Bullet Speed points."""
     return 520 * (1 + 0.06 * p)
 
 
 def reload_time(p: int) -> float:
+    """Return seconds between shots for `p` Fire Rate points."""
     return 0.55 * 0.92**p
 
 
 def bullet_hp(p: int) -> float:
+    """Return bullet health for `p` Bullet Health points."""
     return 10 * (1 + 0.15 * p)
 
 
 def max_health(p: int, level: int) -> float:
+    """Return max HP for `p` Max Health points at `level`."""
     return 50 + 20 * p + 2 * (level - 1)
 
 
@@ -111,14 +120,17 @@ def regen_rate(p: int) -> float:
 
 
 def move_speed(p: int, level: int) -> float:
+    """Return movement speed in pixels per second; higher levels move slightly slower."""
     return 230 * (1 + 0.05 * p) * (1 - 0.0012 * (level - 1))
 
 
 def body_damage(p: int) -> float:
+    """Return contact damage for `p` Body Damage points."""
     return 10 + 6 * p
 
 
 def tank_radius(level: int) -> float:
+    """Return the tank radius, which grows slowly with level."""
     return 24 * (1 + 0.004 * (level - 1))
 
 
@@ -146,18 +158,22 @@ def kill_gems(victim_level: int) -> int:
 
 
 def kill_xp(victim_score: float) -> float:
+    """Return XP for killing a tank: half its score, at least 20."""
     return max(20.0, victim_score / 2)
 
 
 def death_gems(score: float) -> int:
+    """Return gems earned for a run's score when it ends."""
     return int(score // 200)
 
 
 def rebirth_gems(rebirths_done: int) -> int:
+    """Return the gem reward for the next rebirth."""
     return 10000 * (rebirths_done + 1)
 
 
 def rebirth_xp_mult(rebirths: int) -> float:
+    """Return the XP multiplier from previous rebirths (+5% each)."""
     return 1 + 0.05 * rebirths
 
 
@@ -175,6 +191,7 @@ def rank_threshold(rank: int) -> int:
 
 
 def rank_for_score(total_score: float) -> int:
+    """Return the rank (1..20) for a cumulative score."""
     rank = 1
     while rank < RANK_COUNT and total_score >= rank_threshold(rank + 1):
         rank += 1
@@ -182,6 +199,7 @@ def rank_for_score(total_score: float) -> int:
 
 
 def rank_name(rank: int) -> str:
+    """Return the display name of a rank, e.g. "Silver 2"."""
     if rank <= 10:
         return f"Bronze {rank}"
     if rank <= 14:

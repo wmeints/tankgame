@@ -25,6 +25,7 @@ ANY = "*"  # parent wildcard: available from any tank of level 15 or higher
 def B(angle=0.0, length=1.9, width=0.85, offset=0.0, dmg=1.0, reload=1.0,
       speed=1.0, spread=3.0, kind="bullet", delay=0.0, pellets=1, size=1.0,
       recoil=1.0, bhp=1.0, range=1.0, flare=False):
+    """Build a barrel dict (see the module docstring for the fields)."""
     return dict(angle=angle, length=length, width=width, offset=offset,
                 dmg=dmg, reload=reload, speed=speed, spread=spread, kind=kind,
                 delay=delay, pellets=pellets, size=size, recoil=recoil,
@@ -36,6 +37,7 @@ TANKS: dict[str, dict] = {}
 
 def T(name, level, parents, barrels, hp=1.0, speed=1.0, body=1.0, price=0,
       unlock=None, fov=1.0, orbiters=0, grinder=0, invis=False, desc=""):
+    """Register a tank definition in `TANKS`."""
     TANKS[name] = dict(name=name, level=level, parents=list(parents),
                        barrels=barrels, hp=hp, speed=speed, body=body,
                        price=price, unlock=unlock, fov=fov, orbiters=orbiters,
@@ -43,7 +45,7 @@ def T(name, level, parents, barrels, hp=1.0, speed=1.0, body=1.0, price=0,
 
 
 def fan(n, total_angle, **kw):
-    """n barrels spread evenly over total_angle degrees."""
+    """Return n barrels spread evenly over total_angle degrees."""
     if n == 1:
         return [B(**kw)]
     step = total_angle / (n - 1)
@@ -52,10 +54,12 @@ def fan(n, total_angle, **kw):
 
 
 def ring(n, **kw):
+    """Return n barrels evenly spaced around the full circle, alternately staggered."""
     return [B(angle=i * 360 / n, delay=(i % 2) * 0.5, **kw) for i in range(n)]
 
 
 def thrusters(**kw):
+    """Return two weak rear-facing barrels that push the tank forward with recoil."""
     return [B(angle=160, length=1.6, width=0.7, dmg=0.35, reload=0.6,
               recoil=2.5, range=0.6, delay=0.0, **kw),
             B(angle=200, length=1.6, width=0.7, dmg=0.35, reload=0.6,

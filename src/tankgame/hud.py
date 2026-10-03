@@ -1,5 +1,8 @@
-"""In-game HUD: score/level bars, stats panel (E), evolution picker (Q),
-leaderboard, minimap, toasts."""
+"""In-game HUD: score/level bars, stats panel, evolution picker, leaderboard and minimap.
+
+The stats panel opens with E and the evolution picker with Q; toasts show
+short messages in the middle of the screen.
+"""
 
 import math
 
@@ -12,6 +15,8 @@ from .render import Pose, draw_tank_body
 
 
 class Hud:
+    """Overlay drawn on top of the arena that also takes clicks on its panels."""
+
     def __init__(self, scene):
         self.scene = scene
         self.stats_open = False
@@ -21,11 +26,18 @@ class Hud:
 
     @property
     def world(self):
+        """The arena `World` of the scene this HUD belongs to."""
         return self.scene.world
 
     # --- input ----------------------------------------------------------
     def handle_click(self, pos) -> bool:
-        """Returns True if the click was used by the HUD."""
+        """Apply a click to the stats panel or evolution picker.
+
+        Returns
+        -------
+        bool
+            True if the click landed on an open HUD panel and was used.
+        """
         if self.stats_visible() and self._click_stats(pos):
             return True
         return self.evo_open and self._click_evolutions(pos)
@@ -57,12 +69,15 @@ class Hud:
 
     # --- layout ---------------------------------------------------------
     def stats_visible(self):
+        """Return whether the stats panel shows: opened, or points left to spend."""
         return self.stats_open or self.world.player.unspent > 0
 
     def stats_rect(self):
+        """Return the screen rect of the stats panel."""
         return pygame.Rect(12, C.SCREEN_H - 12 - 8 * 30 - 44, 300, 8 * 30 + 44)
 
     def evo_rect(self):
+        """Return the screen rect of the evolution picker, sized to the choices."""
         n = max(1, len(self.world.evolution_choices()))
         cols = min(4, n)
         rows = math.ceil(n / 4)
@@ -70,6 +85,7 @@ class Hud:
 
     # --- drawing --------------------------------------------------------
     def draw(self, surf):
+        """Draw every HUD element and the status messages for the current frame."""
         w = self.world
         p = w.player
         self.draw_bars(surf, p)
@@ -110,6 +126,7 @@ class Hud:
             )
 
     def draw_top_left(self, surf):
+        """Draw gems, rank, difficulty and kills, unless the evolution picker is open."""
         w = self.world
         if self.evo_open:
             return
@@ -124,6 +141,7 @@ class Hud:
         )
 
     def draw_bars(self, surf, p):
+        """Draw the score bar (relative to the best score) and the level progress bar."""
         cx = C.SCREEN_W // 2
         score_rect = pygame.Rect(0, 0, 360, 24)
         score_rect.midbottom = (cx, C.SCREEN_H - 46)
@@ -141,6 +159,7 @@ class Hud:
         ui.text(surf, f"Lvl {p.level} {p.tank_name}", 24, lvl_rect.center, anchor="center")
 
     def draw_stats(self, surf, p):
+        """Draw the stats panel and record the rects of its upgrade buttons."""
         rect = self.stats_rect()
         ui.panel(surf, rect, alpha=170)
         title = f"Upgrades  ({p.unspent} points)" if p.unspent else "Upgrades"
@@ -172,6 +191,7 @@ class Hud:
             self.stat_buttons[stat] = btn
 
     def draw_evolutions(self, surf, opts):
+        """Draw the evolution picker cards for `opts` and record their rects."""
         w = self.world
         rect = self.evo_rect()
         ui.panel(surf, rect, alpha=200)
@@ -225,6 +245,7 @@ class Hud:
             self.evo_cards.append((card, t, unlocked))
 
     def draw_leaderboard(self, surf):
+        """Draw the top 10 living tanks by score."""
         w = self.world
         tanks = sorted([t for t in w.tanks if t.alive], key=lambda t: -t.score)[:10]
         rect = pygame.Rect(C.SCREEN_W - 262, 12, 250, 36 + len(tanks) * 24)
@@ -240,6 +261,7 @@ class Hud:
             ui.text(surf, f"{name} - {_short(t.score)}", 16, r.center, anchor="center")
 
     def draw_minimap(self, surf, p):
+        """Draw the minimap with the nest and an arrow for the player's position."""
         size = 150
         rect = pygame.Rect(C.SCREEN_W - size - 12, C.SCREEN_H - size - 12, size, size)
         ui.panel(surf, rect, color=(150, 150, 150), alpha=170, radius=4)

@@ -24,6 +24,8 @@ def _tone(freq0, freq1, dur, vol=0.3, noise=0.0, decay=6.0):
 
 
 class Sfx:
+    """Synthesized sound effects, silently disabled when no audio device is available."""
+
     def __init__(self):
         self.sounds = {}
         self.enabled = False
@@ -46,6 +48,7 @@ class Sfx:
         self.cooldown = {}
 
     def play(self, name):
+        """Play a named sound, skipping repeats within 40 ms of each other."""
         if not self.enabled or name is None:
             return
         now = pygame.time.get_ticks()

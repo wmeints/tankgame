@@ -1,4 +1,7 @@
+"""Shop scene for buying stat caps, tanks and skins with gems."""
+
 import math
+from typing import override
 
 import pygame
 
@@ -14,6 +17,8 @@ SHOP_TANKS = [n for n, t in TANKS.items() if t["price"] > 0 or t["unlock"]]
 
 
 class ShopScene(BackScene):
+    """Tabbed shop for stat caps, tanks and skins."""
+
     title = "Shop"
 
     def __init__(self, game):
@@ -34,11 +39,13 @@ class ShopScene(BackScene):
         self.build()
 
     def set_tab(self, i):
+        """Switch to tab `i` and rebuild its buttons."""
         self.tab = i
         self.message = ""
         self.build()
 
     def build(self):
+        """Rebuild the buy buttons for the current tab from the profile."""
         prof = self.profile
         self.buttons = []
         if self.tab == 0:
@@ -97,14 +104,17 @@ class ShopScene(BackScene):
                 )
 
     def tank_card(self, i):
+        """Return the screen rect of the `i`-th tank card."""
         col, row = i % 4, i // 4
         return pygame.Rect(C.SCREEN_W // 2 - 520 + col * 265, 180 + row * 300, 245, 280)
 
     def skin_card(self, i):
+        """Return the screen rect of the `i`-th skin card."""
         col, row = i % 4, i // 4
         return pygame.Rect(C.SCREEN_W // 2 - 520 + col * 265, 190 + row * 270, 245, 250)
 
     def buy_cap(self, stat):
+        """Buy the next cap raise for `stat` if the player can afford it."""
         if meta.buy_cap(self.profile, stat):
             self.message = (
                 f"{P.STAT_NAMES[stat]} cap raised to {meta.stat_cap(self.profile, stat)}!"
@@ -114,6 +124,7 @@ class ShopScene(BackScene):
         self.build()
 
     def buy_tank(self, name):
+        """Buy the tank `name` if the player can afford it."""
         if meta.buy_tank(self.profile, name):
             self.message = f"{name} unlocked! Evolve into it at level {TANKS[name]['level']}."
             self.game.sfx.play("evolve")
@@ -121,6 +132,7 @@ class ShopScene(BackScene):
         self.build()
 
     def skin(self, name):
+        """Equip the skin `name`, buying it first if it isn't owned."""
         prof = self.profile
         if name not in prof["skins"]:
             if not meta.buy_skin(prof, name):
@@ -130,7 +142,9 @@ class ShopScene(BackScene):
         self.game.save()
         self.build()
 
+    @override
     def handle_event(self, e):
+        """Press a tab or buy button, on top of the back-button handling."""
         if super().handle_event(e):
             return
         for b in self.tab_buttons + self.buttons:
@@ -138,9 +152,11 @@ class ShopScene(BackScene):
                 self.game.sfx.play("click")
                 return
 
+    @override
     def update(self, dt):
         self.t += dt
 
+    @override
     def draw(self, surf):
         super().draw(surf)
         prof = self.profile

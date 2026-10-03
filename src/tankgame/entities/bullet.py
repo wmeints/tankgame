@@ -1,3 +1,5 @@
+"""Projectiles, particles and orbiters."""
+
 import math
 from dataclasses import dataclass, field
 
@@ -23,10 +25,16 @@ class Bullet:
     explode_radius: float = field(default=0.0, init=False)
 
     def __post_init__(self):
+        """Remember the starting HP and lifetime."""
         self.max_hp = self.hp
         self.max_life = self.life
 
     def update(self, dt: float) -> None:
+        """Advance one step.
+
+        Orbiters circle their owner, rockets accelerate, freeze and flame particles
+        slow down and grow, and everything else flies straight until its life runs out.
+        """
         if self.kind == "orbiter":
             o = self.owner
             n = max(1, o.tdef["orbiters"])

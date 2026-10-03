@@ -155,15 +155,19 @@ _SUF = ["", "", "_Xx", "123", "2015", "YT", "_TTV", "9000", "_Pro", "77", "_RBX"
 
 
 def random_name() -> str:
+    """Return a random player-style bot name."""
     return random.choice(_PRE) + random.choice(_MID) + random.choice(_SUF)
 
 
 def bot_level(difficulty: str, player_level: int) -> int:
+    """Return a random spawn level for a bot, skewed low and capped relative to the player."""
     top = min(P.MAX_LEVEL, max(20, player_level + DIFFICULTY[difficulty]["above"]))
     return 1 + int((top - 1) * random.random() ** 1.6)
 
 
 class Brain:
+    """AI controller that sets a tank's movement, aim and firing, and picks its build."""
+
     def __init__(self, tank, difficulty: str):
         self.tank = tank
         self.diff = DIFFICULTY[difficulty]
@@ -178,6 +182,7 @@ class Brain:
 
     # --- build choices --------------------------------------------------
     def spend_points(self) -> None:
+        """Spend all unspent stat points following the personality's weighted stat order."""
         t = self.tank
         order = self.prefs["stats"]
         while t.unspent > 0:
@@ -193,6 +198,7 @@ class Brain:
             t.upgrade(best)
 
     def choose_evolution(self) -> bool:
+        """Evolve once, preferring the personality's tanks, and return whether it evolved."""
         t = self.tank
         opts = evolution_options(t.tank_name, t.level)
         if not opts:
@@ -218,6 +224,7 @@ class Brain:
 
     # --- behaviour ------------------------------------------------------
     def visible(self, other, dist) -> bool:
+        """Return whether `other` can be seen: not too invisible, or within 200 px."""
         return other.alpha > 0.35 or dist < 200
 
     def think(self) -> None:
@@ -240,7 +247,7 @@ class Brain:
             self.waypoint = self._new_waypoint()
 
     def _scan_tanks(self):
-        """The closest threat and the most attractive prey in view (either may be None)."""
+        """Return the closest threat and the most attractive prey in view (either may be None)."""
         t = self.tank
         hp_ratio = t.hp / t.max_hp
         threat, threat_d = None, 1e9
@@ -306,6 +313,7 @@ class Brain:
         )
 
     def update(self, dt: float) -> None:
+        """Re-think when due, then steer, aim (leading the target) and fire for the current mode."""
         t = self.tank
         self.think_timer -= dt
         if self.think_timer <= 0 or (self.target is not None and not self.target.alive):
@@ -327,7 +335,11 @@ class Brain:
         ax = tgt.x + getattr(tgt, "vx", 0) * lead - t.x
         ay = tgt.y + getattr(tgt, "vy", 0) * lead - t.y
         t.angle = math.atan2(ay, ax) + self.aim_err
-        ux, uy = dx / d, dy / d
+        self._steer(tgt, dx / d, dy / d, d)
+
+    def _steer(self, tgt, ux, uy, d) -> None:
+        """Move and fire toward `tgt` (unit direction `ux`, `uy`, distance `d`) for the mode."""
+        t = self.tank
         melee = self.personality == "melee" or not t.tdef["barrels"]
         if self.mode == "flee":
             t.move_x, t.move_y = -ux + -uy * self.strafe * 0.4, -uy + ux * self.strafe * 0.4
