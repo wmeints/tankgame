@@ -2,13 +2,23 @@
 
 import math
 import random
+from typing import TypedDict
 
 from . import config as C
 from .data import progression as P
 from .data.tanks import evolution_options
 
-PERSONALITIES = {
-    "sniper": dict(
+
+class Personality(TypedDict):
+    """A bot play style: preferred tanks, stat upgrade order and fighting distance."""
+
+    tanks: list[str]
+    stats: list[str]
+    distance: int
+
+
+PERSONALITIES: dict[str, Personality] = {
+    "sniper": Personality(
         tanks=[
             "Scout",
             "Hitman",
@@ -26,7 +36,7 @@ PERSONALITIES = {
         stats=["bspd", "dmg", "reload", "bhp", "speed", "maxhp", "regen", "body"],
         distance=550,
     ),
-    "spammer": dict(
+    "spammer": Personality(
         tanks=[
             "Spammer",
             "Thunder",
@@ -46,7 +56,7 @@ PERSONALITIES = {
         stats=["reload", "dmg", "bhp", "bspd", "maxhp", "speed", "regen", "body"],
         distance=330,
     ),
-    "melee": dict(
+    "melee": Personality(
         tanks=[
             "Grinder",
             "Shredder",
@@ -60,7 +70,7 @@ PERSONALITIES = {
         stats=["body", "maxhp", "speed", "regen", "dmg", "reload", "bhp", "bspd"],
         distance=0,
     ),
-    "heavy": dict(
+    "heavy": Personality(
         tanks=[
             "Double",
             "Triway",
@@ -78,12 +88,12 @@ PERSONALITIES = {
         stats=["maxhp", "dmg", "reload", "bhp", "regen", "bspd", "speed", "body"],
         distance=360,
     ),
-    "frost": dict(
+    "frost": Personality(
         tanks=["Freezer", "Double Freezer", "Triple Freezer", "Mega Freezer", "Flame", "Inferno"],
         stats=["dmg", "reload", "maxhp", "speed", "regen", "bhp", "body", "bspd"],
         distance=110,
     ),
-    "rocket": dict(
+    "rocket": Personality(
         tanks=[
             "Slide",
             "Apex",

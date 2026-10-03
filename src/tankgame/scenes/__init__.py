@@ -17,7 +17,7 @@ class Scene:
         """The player's persistent profile dict."""
         return self.game.profile
 
-    def handle_event(self, event):
+    def handle_event(self, event, /):
         """React to one pygame input event.
 
         Parameters

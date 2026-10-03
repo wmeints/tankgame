@@ -4,6 +4,7 @@ import copy
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 from .data import progression as P
 
@@ -16,7 +17,7 @@ def default_save_path() -> Path:
     return Path(base) / "tankgame" / "save.json"
 
 
-DEFAULT_PROFILE = {
+DEFAULT_PROFILE: dict[str, Any] = {
     "version": SAVE_VERSION,
     "gems": P.STARTING_GEMS,
     "caps": dict.fromkeys(P.STATS, 0),  # cap upgrades bought per stat

@@ -34,7 +34,7 @@ class WheelScene(BackScene):
         self.spinning = False
         self.spin_t = 0.0
         self.start = self.target = 0.0
-        self.prize = None
+        self.prize = 0
         self.message = ""
         self.spin_btn = ui.Button(
             (C.SCREEN_W // 2 - 120, C.SCREEN_H - 110, 240, 64),

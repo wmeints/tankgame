@@ -8,6 +8,7 @@ import pygame
 
 from . import config as C
 from . import save as S
+from .scenes import Scene
 from .sfx import Sfx
 
 
@@ -28,7 +29,7 @@ class Game:
         self.sfx = Sfx() if not headless else _NoSfx()
         self.profile = profile if profile is not None else S.load()
         self.running = True
-        self.scene = None
+        self.scene = Scene(self)
 
     def save(self):
         """Write the profile to disk, unless running headless."""
