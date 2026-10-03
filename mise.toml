@@ -1,2 +1,6 @@
 [tools]
 uv = "latest"
+lefthook = "latest"
+
+[hooks]
+postinstall = "lefthook install"

@@ -1,0 +1,30 @@
+# Git hooks, installed by `mise install` (or run `lefthook install` by hand).
+pre-commit:
+  parallel: true
+  jobs:
+    - name: ruff check
+      run: uv run ruff check .
+    - name: ruff format
+      run: uv run ruff format --check .
+    - name: ty check
+      run: uv run ty check
+    - name: pytest
+      run: uv run pytest -q
+
+commit-msg:
+  jobs:
+    - name: conventional commit
+      run: |
+        head -n1 {1} | grep -qE '^(Merge|Revert|fixup!|squash!) |^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9._/-]+\))?!?: .+' || {
+          echo "Commit message must follow Conventional Commits: <type>(<scope>)!: <subject>"
+          echo "Types: build chore ci docs feat fix perf refactor revert style test"
+          exit 1
+        }
+
+pre-push:
+  jobs:
+    - name: simulate
+      run: uv run tankgame --simulate 3000
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
