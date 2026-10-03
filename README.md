@@ -5,14 +5,34 @@ itself a Diep.io-style arena shooter. You shoot shapes for XP, level up to 150,
 spend stat points, evolve through a tank tree, and fight 12 computer-controlled
 tanks that stand in for the other players.
 
-## Setup (one time, needs internet)
+## Download and play
+
+Download the build for your OS from the
+[latest release](https://github.com/wmeints/tankgame/releases/latest). It bundles its own
+Python, so you don't need to install anything.
+
+- **Windows:** unzip `tankgame-<version>-windows-x86_64.zip` and run `tankgame.exe`.
+  SmartScreen may warn about an unknown publisher. Click *More info*, then *Run anyway*.
+- **macOS (Apple Silicon):** unzip `tankgame-<version>-macos-arm64.zip` and move
+  `Tank Game.app` to Applications. The app isn't signed, so the first time, right-click it
+  and choose *Open*, or run `xattr -dr com.apple.quarantine "/Applications/Tank Game.app"`.
+- **Linux (x86_64):** extract `tankgame-<version>-linux-x86_64.tar.gz` and run `./tankgame`.
+
+If you already have Python 3.14, you can install the wheel from the release instead:
+
+```bash
+pipx install tankgame-<version>-py3-none-any.whl
+tankgame
+```
+
+## Developer setup (one time, needs internet)
 
 ```bash
 mise install          # installs uv (see mise.toml)
 uv sync               # creates .venv with Python 3.14 + pygame-ce
 ```
 
-## Play (works offline)
+## Play from source (works offline)
 
 ```bash
 uv run tankgame
@@ -62,11 +82,31 @@ All balance numbers are plain Python data:
 - `src/tankgame/data/tanks.py`: every tank, its barrels, evolution level, parents and price
 - `src/tankgame/ai.py`: difficulty settings for the bots
 
-Progress is saved in `~/.local/share/tankgame/save.json`. Delete that file to start over.
+Progress is saved in `tankgame/save.json` in your OS's app data directory. Delete that file
+to start over.
+
+- Windows: `%APPDATA%\tankgame\save.json`
+- macOS: `~/Library/Application Support/tankgame/save.json`
+- Linux: `$XDG_DATA_HOME/tankgame/save.json` (default `~/.local/share/tankgame/save.json`)
+
+On Windows and macOS, a save in the old `~/.local/share` location is picked up automatically.
 
 ## Development
 
 ```bash
 uv run pytest                                   # unit tests
 SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000   # headless smoke test
+uv run --group build pyinstaller packaging/tankgame.spec   # standalone build in dist/
 ```
+
+## Releasing
+
+Bump `version` in `pyproject.toml`, merge it to `main`, then push a matching tag:
+
+```bash
+git tag v0.2.0 && git push origin v0.2.0
+```
+
+`.github/workflows/release.yml` runs the tests, builds and smoke-tests the Windows, macOS and
+Linux executables plus the wheel, and publishes them as a GitHub Release. If the tag doesn't
+match the project version, or any build or smoke test fails, nothing is published.

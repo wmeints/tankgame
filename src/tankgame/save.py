@@ -3,6 +3,7 @@
 import copy
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -11,10 +12,30 @@ from .data import progression as P
 SAVE_VERSION = 1
 
 
+def _xdg_data_dir() -> Path:
+    return Path(os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share")
+
+
+def _app_data_dir() -> Path:
+    if sys.platform == "win32" and os.environ.get("APPDATA"):
+        return Path(os.environ["APPDATA"])
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support"
+    return _xdg_data_dir()
+
+
 def default_save_path() -> Path:
-    """Return the save file path under ``$XDG_DATA_HOME`` (or ``~/.local/share``)."""
-    base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
-    return Path(base) / "tankgame" / "save.json"
+    """Return the save file path in the per-OS app data directory.
+
+    That is ``%APPDATA%`` on Windows, ``~/Library/Application Support`` on macOS and
+    ``$XDG_DATA_HOME`` (or ``~/.local/share``) elsewhere.
+    """
+    return _app_data_dir() / "tankgame" / "save.json"
+
+
+def legacy_save_path() -> Path:
+    """Return the XDG save path that every OS used before per-OS app data directories."""
+    return _xdg_data_dir() / "tankgame" / "save.json"
 
 
 DEFAULT_PROFILE: dict[str, Any] = {
@@ -52,8 +73,15 @@ def migrate(data: dict) -> dict:
 
 
 def load(path: Path | None = None) -> dict:
-    """Load and migrate the profile, or return a fresh default if it is missing or unreadable."""
-    path = path or default_save_path()
+    """Load and migrate the profile, or return a fresh default if it is missing or unreadable.
+
+    Without a `path`, an old save at `legacy_save_path` is read when the default path has none.
+    The next `save` then writes it to the default path.
+    """
+    if path is None:
+        path = default_save_path()
+        if not path.exists() and legacy_save_path().exists():
+            path = legacy_save_path()
     try:
         with open(path) as f:
             return migrate(json.load(f))

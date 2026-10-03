@@ -58,3 +58,33 @@ def test_blast_lord_rank_lock():
     assert not meta.tank_unlocked(prof, "Blast Lord")
     prof["total_score"] = P.rank_threshold(P.BLAST_LORD_RANK)
     assert meta.tank_unlocked(prof, "Blast Lord")
+
+
+def test_save_path_per_os(monkeypatch, tmp_path):
+    monkeypatch.setattr(save.Path, "home", lambda: tmp_path)
+    monkeypatch.setenv("APPDATA", str(tmp_path / "Roaming"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setattr(save.sys, "platform", "win32")
+    assert save.default_save_path() == tmp_path / "Roaming" / "tankgame" / "save.json"
+    monkeypatch.setattr(save.sys, "platform", "darwin")
+    expected = tmp_path / "Library" / "Application Support" / "tankgame" / "save.json"
+    assert save.default_save_path() == expected
+    monkeypatch.setattr(save.sys, "platform", "linux")
+    assert save.default_save_path() == tmp_path / "xdg" / "tankgame" / "save.json"
+    monkeypatch.delenv("XDG_DATA_HOME")
+    assert save.default_save_path() == tmp_path / ".local" / "share" / "tankgame" / "save.json"
+
+
+def test_legacy_save_is_read_then_moved(monkeypatch, tmp_path):
+    monkeypatch.setattr(save.Path, "home", lambda: tmp_path)
+    monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+    monkeypatch.setattr(save.sys, "platform", "darwin")
+    prof = fresh()
+    prof["gems"] = 4321
+    save.save(prof, save.legacy_save_path())
+    assert save.load()["gems"] == 4321
+    save.save(save.load())
+    assert save.default_save_path().exists()
+    prof["gems"] = 1
+    save.save(prof)
+    assert save.load()["gems"] == 1

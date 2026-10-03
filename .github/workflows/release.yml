@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+env:
+  UV_LOCKED: "1"
+  SDL_VIDEODRIVER: dummy
+  SDL_AUDIODRIVER: dummy
+
+jobs:
+  version:
+    name: Check tag matches project version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: version
+        run: |
+          version=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match pyproject.toml version $version"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  standalone:
+    name: Standalone build (${{ matrix.name }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # The oldest supported Ubuntu keeps the glibc requirement low for other distros.
+          - { name: linux-x86_64, os: ubuntu-22.04 }
+          - { name: windows-x86_64, os: windows-latest }
+          - { name: macos-arm64, os: macos-latest }
+    env:
+      ASSET: tankgame-${{ needs.version.outputs.version }}-${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv sync --group build
+      - run: uv run pytest
+      - run: uv run pyinstaller --noconfirm packaging/tankgame.spec
+
+      - name: Smoke test and package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          ./dist/tankgame --simulate 3000
+          tar -czf "$ASSET.tar.gz" -C dist tankgame
+      - name: Smoke test and package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          "dist/Tank Game.app/Contents/MacOS/tankgame" --simulate 3000
+          ditto -c -k --keepParent "dist/Tank Game.app" "$ASSET.zip"
+      - name: Smoke test and package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          # A windowed exe detaches from the shell, so wait for it to get its exit code.
+          $p = Start-Process -FilePath dist\tankgame.exe -ArgumentList '--simulate', '3000' -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "smoke test failed with exit code $($p.ExitCode)" }
+          Compress-Archive -Path dist\tankgame.exe -DestinationPath "$env:ASSET.zip"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.ASSET }}
+          path: ${{ env.ASSET }}.*
+          if-no-files-found: error
+
+  wheel:
+    name: Wheel and sdist
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv build
+      - name: Smoke test pipx install
+        run: |
+          uv python install 3.14
+          pipx install --python "$(uv python find 3.14)" dist/*.whl
+          tankgame --simulate 3000
+      - uses: actions/upload-artifact@v7
+        with:
+          name: python-dist
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    needs: [standalone, wheel]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" assets/* \
+            --repo "$GITHUB_REPOSITORY" --title "Tank Game! $GITHUB_REF_NAME" \
+            --generate-notes --verify-tag
