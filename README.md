@@ -1,5 +1,7 @@
 # Tank Game! (offline edition)
 
+![Tank Game Main Screen](assets/main-screen.png)
+
 An offline clone of the Roblox game **💥 Tank Game!** (by the 7x3 group), which is
 itself a Diep.io-style arena shooter. You shoot shapes for XP, level up to 150,
 spend stat points, evolve through a tank tree, and fight 12 computer-controlled
