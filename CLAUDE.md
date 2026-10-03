@@ -18,9 +18,10 @@ uv run pytest tests/test_tanks.py::test_every_tank_can_fire   # single test
 SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000    # headless smoke test
 uv run ruff format . && uv run ruff check --fix .        # format + lint
 uv run ty check                                          # type check
+uv run --group build pyinstaller packaging/tankgame.spec # standalone build in dist/
 ```
 
-`.github/workflows/pr.yml` runs ruff (check + format), `ty check`, pytest and `--simulate 3000` on every pull request and push to `main`.
+`.github/workflows/pr.yml` runs ruff (check + format), `ty check`, pytest and `--simulate 3000` on every pull request and push to `main`. `.github/workflows/release.yml` runs on `v*` tags (the tag must match the `pyproject.toml` version). It builds the PyInstaller executables on Windows, macOS and Linux and the wheel, smoke-tests each with `--simulate 3000`, and only then publishes a GitHub Release. The game has no asset files, so the spec in `packaging/` needs no data-file config. If you add assets, add them to the spec too.
 
 Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12 branches, 40 statements, 6 args). When a function exceeds them, split it into smaller helpers. Don't add `noqa`. Long functions read as a short list of named steps (see `World.update`, `Tank.update`). When there are too many arguments, group the ones that belong together, as `render.Pose` does, or build with keywords, as `Bullet` does. Every public module, class, function and method needs a numpy-style docstring (pydocstyle `D` rules, numpy convention; tests are exempt from the "missing docstring" rules). Keep them short: an imperative summary line, plus `Parameters`/`Returns` sections only where the names don't already say it. A method that overrides a documented base method takes `@typing.override` instead of a repeated docstring. Unused imports and variables are reported but never auto-removed (`unfixable`), because they're often unused only until the next edit. `data/tanks.py` is hand-aligned and excluded from the formatter only.
 
@@ -41,7 +42,7 @@ Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12
 - `data/progression.py`: XP curve, stat formulas, shapes, gems, ranks, quests, codes, wheel prizes and skins.
 - `ai.py` `DIFFICULTY`: difficulty settings for the bots, plus the player damage multiplier (`hurt`).
 
-**Persistent meta-progression** (`save.py`, `meta.py`): the profile is a plain dict persisted as JSON at `$XDG_DATA_HOME/tankgame/save.json` (default `~/.local/share/...`). `meta.py` has functions that mutate the profile: quests, code redemption, the prize wheel, stat caps, ranks and unlocks. When you add a profile field, add it to `save.DEFAULT_PROFILE`. `migrate()` merges old saves into the defaults, one dict level deep. `Game.save()` does nothing in headless mode. Tests and `--simulate` use a `deepcopy` of `DEFAULT_PROFILE`, never the real save.
+**Persistent meta-progression** (`save.py`, `meta.py`): the profile is a plain dict persisted as JSON at `tankgame/save.json` in the per-OS app data dir (`%APPDATA%`, `~/Library/Application Support`, or `$XDG_DATA_HOME`/`~/.local/share`). `load()` falls back to the old XDG path on Windows and macOS. `meta.py` has functions that mutate the profile: quests, code redemption, the prize wheel, stat caps, ranks and unlocks. When you add a profile field, add it to `save.DEFAULT_PROFILE`. `migrate()` merges old saves into the defaults, one dict level deep. `Game.save()` does nothing in headless mode. Tests and `--simulate` use a `deepcopy` of `DEFAULT_PROFILE`, never the real save.
 
 **Misc**: `sfx.py` synthesizes all sounds at runtime, so there are no asset files. Headless mode swaps in `_NoSfx`. `config.py` holds the screen and arena constants and the Diep-style color palette.
 
