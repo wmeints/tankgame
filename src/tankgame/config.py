@@ -36,4 +36,5 @@ XP_YELLOW = (255, 222, 67)
 
 
 def darken(color, f=0.75):
+    """Return an RGB copy of ``color`` with each channel scaled by ``f``."""
     return tuple(max(0, int(c * f)) for c in color[:3])

@@ -10,6 +10,7 @@ from . import config as C
 
 
 def rainbow(t: float):
+    """Return an RGB color that cycles through the hues as time `t` advances."""
     r, g, b = colorsys.hsv_to_rgb((t * 0.2) % 1.0, 0.7, 1.0)
     return int(r * 255), int(g * 255), int(b * 255)
 
@@ -19,11 +20,13 @@ def _lighten(color, f):
 
 
 def poly(surf, color, pts, outline_w):
+    """Draw a filled polygon with a darker outline."""
     pygame.draw.polygon(surf, color, pts)
     pygame.draw.polygon(surf, C.darken(color), pts, max(1, outline_w))
 
 
 def circle(surf, color, center, r, outline_w):
+    """Draw a filled circle with a darker outline."""
     r = max(1, int(r))
     pygame.draw.circle(surf, C.darken(color), center, r)
     pygame.draw.circle(surf, color, center, max(1, r - max(1, outline_w)))
@@ -84,30 +87,36 @@ def draw_tank_body(surf, tdef, pose, color, spin=0.0, flash=False):
 
 
 class Camera:
+    """Maps between world and screen coordinates around a center point and zoom."""
+
     def __init__(self):
         self.x = self.y = C.ARENA_SIZE / 2
         self.zoom = 1.0
         self.shake = 0.0
 
     def to_screen(self, x, y):
+        """Convert a world position to screen coordinates."""
         return (
             (x - self.x) * self.zoom + C.SCREEN_W / 2,
             (y - self.y) * self.zoom + C.SCREEN_H / 2,
         )
 
     def to_world(self, sx, sy):
+        """Convert a screen position to world coordinates."""
         return (
             (sx - C.SCREEN_W / 2) / self.zoom + self.x,
             (sy - C.SCREEN_H / 2) / self.zoom + self.y,
         )
 
     def visible(self, x, y, r):
+        """Return whether a circle at world `(x, y)` with radius `r` is on screen."""
         sx, sy = self.to_screen(x, y)
         rr = r * self.zoom + 10
         return -rr < sx < C.SCREEN_W + rr and -rr < sy < C.SCREEN_H + rr
 
 
 def draw_background(surf, cam):
+    """Draw the area outside the arena, the arena floor, the nest and the grid."""
     surf.fill(C.BG_OUTSIDE)
     x0, y0 = cam.to_screen(0, 0)
     x1, y1 = cam.to_screen(C.ARENA_SIZE, C.ARENA_SIZE)
@@ -133,6 +142,7 @@ def draw_background(surf, cam):
 
 
 def hp_bar(surf, x, y, w, frac):
+    """Draw a health bar centered on `(x, y)`; skipped when health is full."""
     if frac >= 0.999:
         return
     rect = pygame.Rect(0, 0, w, 7)
@@ -144,6 +154,7 @@ def hp_bar(surf, x, y, w, frac):
 
 
 def draw_shape(surf, cam, s):
+    """Draw a shape, flashing when hit, with a health bar once damaged."""
     sx, sy = cam.to_screen(s.x, s.y)
     col = _lighten(s.color, 0.6) if s.flash > 0 else s.color
     poly(surf, col, s.points(sx, sy, cam.zoom), max(1, int(3 * cam.zoom)))
@@ -152,6 +163,7 @@ def draw_shape(surf, cam, s):
 
 
 def draw_bullet(surf, cam, b, color):
+    """Draw a bullet in the style of its kind."""
     sx, sy = cam.to_screen(b.x, b.y)
     r = b.radius * cam.zoom
     ow = max(1, int(3 * cam.zoom))
@@ -189,6 +201,13 @@ def draw_bullet(surf, cam, b, color):
 
 
 def draw_tank(surf, cam, t, color, time):
+    """Draw a tank in the world, blinking while immune and translucent if faded.
+
+    Returns
+    -------
+    tuple of float
+        The tank's screen position and radius, as `(sx, sy, r)`.
+    """
     sx, sy = cam.to_screen(t.x, t.y)
     r = t.radius * cam.zoom
     if t.immune > 0 and int(time * 8) % 2 == 0:

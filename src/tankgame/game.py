@@ -1,3 +1,5 @@
+"""The game window, the fixed-timestep main loop and the command-line entry point."""
+
 import copy
 import os
 import sys
@@ -10,6 +12,8 @@ from .sfx import Sfx
 
 
 class Game:
+    """Own the window, the profile and the current scene, and run the main loop."""
+
     def __init__(self, headless=False, profile=None):
         pygame.init()
         pygame.display.set_caption("Tank Game! (offline)")
@@ -27,19 +31,23 @@ class Game:
         self.scene = None
 
     def save(self):
+        """Write the profile to disk, unless running headless."""
         if not self.headless:
             S.save(self.profile)
 
     def goto(self, scene):
+        """Switch to another scene, enabling text input if it wants it."""
         pygame.key.stop_text_input()
         self.scene = scene
         if getattr(scene, "wants_text", False):
             pygame.key.start_text_input()
 
     def quit(self):
+        """Stop the main loop after the current frame."""
         self.running = False
 
     def run(self):
+        """Run the game from the main menu until the window closes, then save."""
         from .scenes.menu import MenuScene
 
         self.goto(MenuScene(self))
@@ -121,6 +129,7 @@ def simulate(frames: int) -> int:
 
 
 def main(argv=None):
+    """Run the game, or the headless simulation when `--simulate N` is given."""
     argv = sys.argv[1:] if argv is None else argv
     if "--simulate" in argv:
         i = argv.index("--simulate")

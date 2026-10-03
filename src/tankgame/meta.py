@@ -8,10 +8,12 @@ from .data.tanks import TANKS
 
 
 def today() -> str:
+    """Return today's date as an ISO string, the key for daily resets."""
     return datetime.date.today().isoformat()
 
 
 def week_id() -> str:
+    """Return the current ISO week as `YYYY-Www`, the key for weekly resets."""
     y, w, _ = datetime.date.today().isocalendar()
     return f"{y}-W{w}"
 
@@ -21,6 +23,7 @@ def _quest_entry(q):
 
 
 def ensure_quests(profile: dict) -> None:
+    """Roll new daily and weekly quests when they are stale, and add missing unique quests."""
     qs = profile["quests"]
     if qs["daily_date"] != today():
         rng = random.Random(today())
@@ -38,6 +41,7 @@ QUEST_DEFS = {q[0]: q for q in P.DAILY_POOL + P.WEEKLY_POOL + P.UNIQUE_QUESTS}
 
 
 def all_quest_entries(profile: dict):
+    """Yield `(kind, entry)` for every daily, weekly and unique quest in the profile."""
     qs = profile["quests"]
     for e in qs["daily"]:
         yield "Daily", e
@@ -68,6 +72,20 @@ def quest_event(profile: dict, event: str, amount: float = 1) -> list[str]:
 
 
 def grant_reward(profile: dict, reward) -> str:
+    """Grant a quest reward and return a message describing it.
+
+    Parameters
+    ----------
+    profile : dict
+        The profile to update.
+    reward : int or str
+        A gem amount, or the name of a tank to unlock.
+
+    Returns
+    -------
+    str
+        A short message describing the reward.
+    """
     if isinstance(reward, str):
         if reward not in profile["unlocked_tanks"]:
             profile["unlocked_tanks"].append(reward)
@@ -77,6 +95,7 @@ def grant_reward(profile: dict, reward) -> str:
 
 
 def redeem_code(profile: dict, code: str) -> str:
+    """Redeem a code for gems, head-start XP or spins, and return a status message."""
     code = code.strip().upper()
     if code not in P.CODES:
         return "Invalid code."
@@ -95,10 +114,12 @@ def redeem_code(profile: dict, code: str) -> str:
 
 
 def can_spin(profile: dict) -> bool:
+    """Return whether the free daily spin or a bought spin is available."""
     return profile["last_free_spin"] != today() or profile["spins"] > 0
 
 
 def use_spin(profile: dict) -> None:
+    """Use the free daily spin if it is unused, otherwise one bought spin."""
     if profile["last_free_spin"] != today():
         profile["last_free_spin"] = today()
     else:
@@ -106,11 +127,13 @@ def use_spin(profile: dict) -> None:
 
 
 def pick_prize(rng=random) -> int:
+    """Pick a weighted random wheel prize and return its index in `WHEEL_PRIZES`."""
     weights = [p[3] for p in P.WHEEL_PRIZES]
     return rng.choices(range(len(P.WHEEL_PRIZES)), weights=weights)[0]
 
 
 def apply_prize(profile: dict, idx: int) -> str:
+    """Grant the wheel prize at `idx` and return a message describing it."""
     label, kind, val, _w = P.WHEEL_PRIZES[idx]
     if kind == "gems":
         profile["gems"] += val
@@ -127,16 +150,19 @@ def apply_prize(profile: dict, idx: int) -> str:
 
 
 def stat_cap(profile: dict, stat: str) -> int:
+    """Return the maximum number of points the player can put into a stat."""
     return P.BASE_CAP + profile["caps"][stat]
 
 
 def next_cap_cost(profile: dict, stat: str) -> int | None:
+    """Return the gem cost of the next cap upgrade for a stat, or None if maxed."""
     if stat_cap(profile, stat) >= P.MAX_CAPS[stat]:
         return None
     return P.cap_upgrade_cost(profile["caps"][stat] + 1)
 
 
 def buy_cap(profile: dict, stat: str) -> bool:
+    """Buy the next cap upgrade for a stat. Return whether it was bought."""
     cost = next_cap_cost(profile, stat)
     if cost is None or profile["gems"] < cost:
         return False
@@ -146,10 +172,12 @@ def buy_cap(profile: dict, stat: str) -> bool:
 
 
 def rank(profile: dict) -> int:
+    """Return the player's rank based on their total score."""
     return P.rank_for_score(profile["total_score"])
 
 
 def tank_unlocked(profile: dict, name: str) -> bool:
+    """Return whether the player may evolve into the named tank."""
     t = TANKS[name]
     if t["unlock"] == "rank":
         return rank(profile) >= P.BLAST_LORD_RANK
@@ -159,6 +187,7 @@ def tank_unlocked(profile: dict, name: str) -> bool:
 
 
 def lock_reason(profile: dict, name: str) -> str:
+    """Return a short label saying how a locked tank is unlocked."""
     t = TANKS[name]
     if t["unlock"] == "rank":
         return f"Rank {P.BLAST_LORD_RANK}"
@@ -170,6 +199,7 @@ def lock_reason(profile: dict, name: str) -> str:
 
 
 def buy_tank(profile: dict, name: str) -> bool:
+    """Buy a tank with gems. Return whether it was bought."""
     t = TANKS[name]
     if t["price"] <= 0 or name in profile["unlocked_tanks"] or profile["gems"] < t["price"]:
         return False
@@ -179,6 +209,7 @@ def buy_tank(profile: dict, name: str) -> bool:
 
 
 def buy_skin(profile: dict, name: str) -> bool:
+    """Buy a skin with gems. Return whether it was bought."""
     for skin, _col, price in P.SKINS:
         if skin == name and skin not in profile["skins"] and profile["gems"] >= price:
             profile["gems"] -= price
@@ -188,7 +219,7 @@ def buy_skin(profile: dict, name: str) -> bool:
 
 
 def record_run(profile: dict, score: float, level: int, kills: int) -> list[str]:
-    """Called when a run ends. Returns messages."""
+    """Record a finished run and award gems and ranks. Return messages to show."""
     msgs = []
     old_rank = rank(profile)
     profile["total_score"] += int(score)

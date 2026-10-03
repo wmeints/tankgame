@@ -50,6 +50,7 @@ select = [
     "RUF",      # ruff-specific
     "C90",      # mccabe cyclomatic complexity
     "PLR",      # pylint refactor: branches, statements, returns, args
+    "D",        # pydocstyle, numpy convention (see below)
 ]
 # Report, don't auto-delete: the edit hook runs `ruff check --fix` after every edit, and an
 # import or variable is often unused only until the next edit of a multi-step change.
@@ -59,6 +60,9 @@ ignore = [
     "N812",     # project convention: `import config as C`, `progression as P`
     "C408",     # dict(key=value) reads well for balance tables
 ]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
@@ -72,6 +76,7 @@ max-nested-blocks = 3
 max-bool-expr = 4
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["PLR0913", "PLR0917"]
+# Test names describe what they check; a docstring would repeat them.
+"tests/**" = ["PLR0913", "PLR0917", "D1"]
 # The evolution tree is a DSL: T(...) and B(...) take many keyword-style fields on purpose.
 "src/tankgame/data/tanks.py" = ["N802", "PLR0913", "PLR0917", "A002"]

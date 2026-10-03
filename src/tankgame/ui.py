@@ -8,6 +8,7 @@ _fonts: dict[int, pygame.font.Font] = {}
 
 
 def font(size: int) -> pygame.font.Font:
+    """Return the cached bold default font at the given pixel size."""
     f = _fonts.get(size)
     if f is None:
         f = pygame.font.Font(None, size)
@@ -37,12 +38,14 @@ def plain_text(surf, s, size, pos, color=C.TEXT, anchor="topleft"):
 
 
 def panel(surf, rect, color=C.UI_PANEL, alpha=225, radius=10):
+    """Draw a translucent rounded rectangle."""
     s = pygame.Surface(rect.size, pygame.SRCALPHA)
     pygame.draw.rect(s, (*color, alpha), s.get_rect(), border_radius=radius)
     surf.blit(s, rect.topleft)
 
 
 def bar(surf, rect, frac, color, back=(40, 40, 40), radius=8):
+    """Draw a progress bar filled to `frac` (clamped to 1.0) of its width."""
     pygame.draw.rect(surf, back, rect, border_radius=radius)
     if frac > 0:
         inner = rect.inflate(-4, -4)
@@ -51,6 +54,8 @@ def bar(surf, rect, frac, color, back=(40, 40, 40), radius=8):
 
 
 class Button:
+    """Clickable rounded button that calls `action` when clicked while enabled."""
+
     def __init__(self, rect, label, action=None, color=C.UI_ACCENT, size=30, enabled=True):
         self.rect = pygame.Rect(rect)
         self.label = label
@@ -60,6 +65,7 @@ class Button:
         self.enabled = enabled
 
     def draw(self, surf):
+        """Draw the button, lighter on hover and grey when disabled."""
         hover = self.rect.collidepoint(pygame.mouse.get_pos()) and self.enabled
         col = self.color if self.enabled else (110, 110, 110)
         if hover:
@@ -69,6 +75,13 @@ class Button:
         text(surf, self.label, self.size, self.rect.center, anchor="center")
 
     def handle(self, event) -> bool:
+        """Run the action on a left click inside the button.
+
+        Returns
+        -------
+        bool
+            True if the event was a left click on the enabled button.
+        """
         if (
             event.type == pygame.MOUSEBUTTONDOWN
             and event.button == 1
@@ -82,6 +95,7 @@ class Button:
 
 
 def gem_icon(surf, center, size=10):
+    """Draw a gem icon centered on `center`."""
     x, y = center
     pts = [
         (x, y - size),
@@ -94,6 +108,11 @@ def gem_icon(surf, center, size=10):
 
 
 def gems_label(surf, amount, pos, size=32, anchor="topleft"):
+    """Draw a gem amount with a gem icon to its left and return the text rect.
+
+    With the default `topleft` anchor, `pos` is where the icon goes and the
+    text starts just right of it.
+    """
     r = text(
         surf,
         f"{int(amount):,}",

@@ -1,3 +1,5 @@
+"""The tank entity shared by the player and the bots."""
+
 import math
 import random
 
@@ -8,6 +10,8 @@ from .bullet import Bullet
 
 
 class Tank:
+    """A tank with stats, levels, barrels and evolutions, steered by input or a `Brain`."""
+
     is_tank = True
     _next_id = 1
 
@@ -55,6 +59,7 @@ class Tank:
 
     @classmethod
     def make_player(cls, arena, pos, color, caps, xp_mult):
+        """Create the player's tank with its stat caps and XP multiplier."""
         tank = cls(arena, "You", pos, color, caps)
         tank.is_player = True
         tank.xp_mult = xp_mult
@@ -62,6 +67,7 @@ class Tank:
 
     # --- progression ----------------------------------------------------
     def set_tank(self, name: str) -> None:
+        """Switch to tank type `name`, resetting barrels and orbiters, keeping the HP fraction."""
         self.tank_name = name
         self.tdef = TANKS[name]
         self.timers = [b["delay"] * self._reload(b) for b in self.tdef["barrels"]]
@@ -75,10 +81,12 @@ class Tank:
             self.hp = min(self.max_hp, self.hp * self.max_hp / old_max)
 
     def evolve(self, name: str) -> None:
+        """Evolve into tank type `name` and record it in this run's evolutions."""
         self.evolutions.append(name)
         self.set_tank(name)
 
     def recompute(self) -> None:
+        """Recalculate derived stats from level, stat points and the tank definition."""
         p = self.points
         t = self.tdef
         self.radius = P.tank_radius(self.level)
@@ -111,9 +119,11 @@ class Tank:
         return gained
 
     def can_upgrade(self, stat: str) -> bool:
+        """Return whether a point can be spent on `stat` (points left and below its cap)."""
         return self.unspent > 0 and self.points[stat] < self.caps[stat]
 
     def upgrade(self, stat: str) -> bool:
+        """Spend a stat point on `stat` and return whether it was spent."""
         if not self.can_upgrade(stat):
             return False
         self.points[stat] += 1
@@ -125,6 +135,7 @@ class Tank:
 
     # --- simulation -----------------------------------------------------
     def update(self, dt: float) -> None:
+        """Advance the tank one step: timers, movement, status effects, regen and firing."""
         self._tick_timers(dt)
         self._move(dt)
         self._tick_status_effects(dt)
@@ -229,6 +240,13 @@ class Tank:
                 self.timers[i] = max(self.timers[i] - dt, b["delay"] * rel)
 
     def muzzle(self, b):
+        """Locate the muzzle of barrel `b`.
+
+        Returns
+        -------
+        tuple of float
+            The firing angle in radians and the muzzle's world x and y.
+        """
         a = self.angle + math.radians(b["angle"])
         ca, sa = math.cos(a), math.sin(a)
         length = b["length"] * self.radius
@@ -236,6 +254,7 @@ class Tank:
         return a, self.x + ca * length - sa * off, self.y + sa * length + ca * off
 
     def fire(self, b) -> None:
+        """Fire barrel `b` once (bullets or a laser) and apply its recoil."""
         arena = self.arena
         a, mx, my = self.muzzle(b)
         if b["kind"] == "laser":
@@ -277,6 +296,10 @@ class Tank:
             arena.sfx("shoot" if b["kind"] not in ("freeze", "flame") else None)
 
     def take_damage(self, amount: float, source, arena=None, flash=True) -> None:
+        """Lose HP unless spawn-immune, and notify the arena if this kills the tank.
+
+        `arena` is unused and only keeps the signature in line with `Shape.take_damage`.
+        """
         if not self.alive or self.immune > 0:
             return
         if self.is_player:

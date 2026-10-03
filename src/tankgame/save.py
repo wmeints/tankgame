@@ -11,6 +11,7 @@ SAVE_VERSION = 1
 
 
 def default_save_path() -> Path:
+    """Return the save file path under ``$XDG_DATA_HOME`` (or ``~/.local/share``)."""
     base = os.environ.get("XDG_DATA_HOME") or os.path.expanduser("~/.local/share")
     return Path(base) / "tankgame" / "save.json"
 
@@ -50,6 +51,7 @@ def migrate(data: dict) -> dict:
 
 
 def load(path: Path | None = None) -> dict:
+    """Load and migrate the profile, or return a fresh default if it is missing or unreadable."""
     path = path or default_save_path()
     try:
         with open(path) as f:
@@ -59,6 +61,7 @@ def load(path: Path | None = None) -> dict:
 
 
 def save(profile: dict, path: Path | None = None) -> None:
+    """Write the profile to disk atomically through a temporary file."""
     path = path or default_save_path()
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")

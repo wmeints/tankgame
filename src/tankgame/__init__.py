@@ -2,6 +2,7 @@
 
 
 def main() -> None:
+    """Run the game."""
     from .game import main as _main
 
     _main()

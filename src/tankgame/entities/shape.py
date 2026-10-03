@@ -1,3 +1,5 @@
+"""Polygon shapes that drift around the arena and give XP when destroyed."""
+
 import math
 import random
 
@@ -6,6 +8,8 @@ from ..data import progression as P
 
 
 class Shape:
+    """A square, triangle, pentagon or alpha pentagon, optionally shiny."""
+
     is_tank = False
 
     def __init__(self, kind: str, x: float, y: float, shiny: bool = False):
@@ -43,6 +47,7 @@ class Shape:
         )
 
     def update(self, dt: float) -> None:
+        """Spin, drift, decay knockback and bounce off the arena walls."""
         self.angle += self.spin * dt
         self.x += (self.vx + self.kx) * dt
         self.y += (self.vy + self.ky) * dt
@@ -60,6 +65,7 @@ class Shape:
             self.flash -= dt
 
     def take_damage(self, amount: float, source, arena) -> None:
+        """Lose HP and notify the arena if this destroys the shape."""
         if not self.alive:
             return
         self.hp -= amount

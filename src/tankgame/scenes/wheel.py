@@ -1,5 +1,8 @@
+"""Prize wheel scene: spend a spin and land on a random prize."""
+
 import math
 import random
+from typing import override
 
 import pygame
 
@@ -21,6 +24,8 @@ SEG_COLORS = [
 
 
 class WheelScene(BackScene):
+    """Spinning prize wheel with a daily free spin."""
+
     title = "Prize Wheel"
 
     def __init__(self, game):
@@ -40,6 +45,7 @@ class WheelScene(BackScene):
         )
 
     def spin(self):
+        """Use a spin, pick the prize and start the wheel turning towards it."""
         if self.spinning or not meta.can_spin(self.profile):
             return
         meta.use_spin(self.profile)
@@ -55,12 +61,14 @@ class WheelScene(BackScene):
         self.spinning = True
         self.message = ""
 
+    @override
     def handle_event(self, e):
         if super().handle_event(e):
             return
         if self.spin_btn.handle(e):
             self.game.sfx.play("click")
 
+    @override
     def update(self, dt):
         if not self.spinning:
             return
@@ -74,6 +82,7 @@ class WheelScene(BackScene):
         ease = 1 - (1 - self.spin_t) ** 3
         self.angle = self.start + (self.target - self.start) * ease
 
+    @override
     def draw(self, surf):
         super().draw(surf)
         prof = self.profile

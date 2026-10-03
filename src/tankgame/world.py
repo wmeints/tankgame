@@ -19,6 +19,8 @@ BULLET_VS_BULLET = {"bullet", "spike", "rocket", "orbiter"}
 
 
 class World:
+    """The arena simulation for a single run."""
+
     def __init__(self, profile: dict, sfx=None, autoplay=False):
         self.profile = profile
         self.difficulty = profile.get("difficulty", "normal")
@@ -66,6 +68,7 @@ class World:
 
     # --- helpers --------------------------------------------------------
     def skin_color(self, t):
+        """Return the player's color for the selected skin at time `t`."""
         from .render import rainbow
 
         for name, col, _price in P.SKINS:
@@ -74,14 +77,17 @@ class World:
         return C.PLAYER_COLOR
 
     def sfx(self, name):
+        """Play a sound effect, if sound is available."""
         if self._sfx:
             self._sfx.play(name)
 
     def toast(self, text, color=C.TEXT, ttl=3.0):
+        """Show a short message on screen, keeping the five most recent."""
         self.toasts.append([text, ttl, color])
         self.toasts = self.toasts[-5:]
 
     def random_spawn(self):
+        """Return a random spawn position outside the central nest."""
         while True:
             x = random.uniform(300, C.ARENA_SIZE - 300)
             y = random.uniform(300, C.ARENA_SIZE - 300)
@@ -89,6 +95,7 @@ class World:
                 return x, y
 
     def spawn_shape(self, kind):
+        """Spawn a shape of the given kind, alphas and most pentagons in the nest."""
         c = C.ARENA_SIZE / 2
         if kind == "alpha":
             a, d = random.uniform(0, math.tau), random.uniform(0, C.NEST_RADIUS * 0.6)
@@ -106,6 +113,7 @@ class World:
         self.shapes.append(Shape(kind, x, y, shiny))
 
     def spawn_bot(self, far=False):
+        """Spawn a bot away from the player, levelled to match the difficulty."""
         for _ in range(30):
             x, y = self.random_spawn()
             p = self.player
@@ -123,26 +131,31 @@ class World:
         self.tanks.append(bot)
 
     def shapes_near(self, x, y, r):
+        """Return the live shapes within `r` of `(x, y)`."""
         return [e for e in self.solids.query_unique(x, y, r) if not e.is_tank and e.alive]
 
     def evolution_choices(self):
+        """Return the tanks the player can evolve into at their current level."""
         from .data.tanks import evolution_options
 
         return evolution_options(self.player.tank_name, self.player.level)
 
     # --- events ---------------------------------------------------------
     def quest(self, event, amount=1):
+        """Record quest progress and announce completed quests."""
         for msg in meta.quest_event(self.profile, event, amount):
             self.toast(msg, C.GEM_COLOR, 5)
             self.sfx("gem")
 
     def player_evolve(self, name):
+        """Evolve the player into the named tank."""
         self.player.evolve(name)
         self.sfx("evolve")
         self.toast(f"Evolved into {name}!", C.XP_YELLOW)
         self.quest("evolve")
 
     def give_gems(self, n, why=""):
+        """Give the player `n` gems and announce them with an optional reason."""
         if n <= 0:
             return
         self.profile["gems"] += n
@@ -151,6 +164,7 @@ class World:
         self.sfx("gem")
 
     def credit_xp(self, tank, xp):
+        """Give a tank XP and handle any level-ups."""
         old = tank.level
         gained = tank.add_xp(xp)
         if gained:
@@ -165,6 +179,7 @@ class World:
                     self.toast("Level 150! Press R to Rebirth", C.XP_YELLOW, 8)
 
     def on_shape_killed(self, shape, source):
+        """Reward the tank that destroyed a shape with XP, gems and quest progress."""
         if source is None or not getattr(source, "is_tank", False):
             return
         self.credit_xp(source, shape.xp)
@@ -178,6 +193,7 @@ class World:
             self.sfx("hit")
 
     def on_tank_killed(self, victim, killer):
+        """Reward the killer, then end the run or queue a bot respawn."""
         self.rings.append(Ring(victim.x, victim.y, victim.radius * 2, victim.color, 0.5))
         if getattr(killer, "is_tank", False) and killer.alive:
             killer.kills += 1
@@ -200,6 +216,23 @@ class World:
             self.bot_respawns.append(random.uniform(3, 8))
 
     def fire_laser(self, owner, start, angle, rng, damage, width):
+        """Fire an instant laser beam and damage everything it touches.
+
+        Parameters
+        ----------
+        owner : Tank
+            The tank firing the laser. It is never hit by its own beam.
+        start : tuple of float
+            The `(x, y)` point the beam starts from.
+        angle : float
+            The beam direction in radians.
+        rng : float
+            The beam length.
+        damage : float
+            The damage dealt to each entity hit.
+        width : float
+            The beam width.
+        """
         x, y = start
         ca, sa = math.cos(angle), math.sin(angle)
         ex, ey = x + ca * rng, y + sa * rng
@@ -221,6 +254,7 @@ class World:
             self.sfx("shoot")
 
     def explode(self, b):
+        """Explode a rocket, damaging everything within its blast radius."""
         self.rings.append(Ring(b.x, b.y, b.explode_radius, C.FLAME_COLOR, 0.3))
         for e in self.solids.query_unique(b.x, b.y, b.explode_radius):
             if e is b.owner or not e.alive:
@@ -229,6 +263,7 @@ class World:
                 e.take_damage(b.damage, b.owner, self)
 
     def rebirth(self):
+        """End the run with a rebirth at the max level. Return whether it happened."""
         p = self.player
         if p.level < P.REBIRTH_LEVEL or self.dead:
             return False
@@ -242,6 +277,7 @@ class World:
 
     # --- update ---------------------------------------------------------
     def update(self, dt):
+        """Advance the simulation by `dt` seconds."""
         self.time += dt
         if not self.dead:
             self._tick_score_quest(dt)
@@ -316,6 +352,7 @@ class World:
 
     # --- collisions -----------------------------------------------------
     def collide(self, dt):
+        """Resolve all collisions between bullets, shapes and tanks."""
         self._rebuild_solids()
         self._collide_bullets_with_bullets()
         self._collide_bullets_with_solids()
