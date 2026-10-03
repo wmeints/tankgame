@@ -1,5 +1,6 @@
 import copy
 import random
+from types import SimpleNamespace
 
 from tankgame import config as C
 from tankgame import save
@@ -50,3 +51,24 @@ def test_every_tank_can_fire():
         if TANKS[name]["barrels"]:
             assert len(w.bullets) + len(w.beams) > 0, name
         assert p.alive or w.dead
+
+
+def _flame(damage):
+    return SimpleNamespace(kind="flame", damage=damage, owner=None)
+
+
+def test_burn_keeps_higher_rate_while_active():
+    w = World(copy.deepcopy(save.DEFAULT_PROFILE))
+    tank = w.tanks[1]
+    w._apply_status(_flame(50), tank)
+    w._apply_status(_flame(2), tank)
+    assert tank.burn_dps == 200
+
+
+def test_burn_rate_resets_after_burn_expires():
+    w = World(copy.deepcopy(save.DEFAULT_PROFILE))
+    tank = w.tanks[1]
+    w._apply_status(_flame(50), tank)
+    tank.burn_timer = 0
+    w._apply_status(_flame(2), tank)
+    assert tank.burn_dps == 8
