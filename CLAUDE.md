@@ -17,7 +17,10 @@ uv run pytest                                            # all tests
 uv run pytest tests/test_tanks.py::test_every_tank_can_fire   # single test
 SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000    # headless smoke test
 uv run ruff format . && uv run ruff check --fix .        # format + lint
+uv run ty check                                          # type check
 ```
+
+`.github/workflows/pr.yml` runs ruff (check + format), `ty check`, pytest and `--simulate 3000` on every pull request and push to `main`.
 
 Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12 branches, 40 statements, 6 args). When a function exceeds them, split it into smaller helpers. Don't add `noqa`. Long functions read as a short list of named steps (see `World.update`, `Tank.update`). When there are too many arguments, group the ones that belong together, as `render.Pose` does, or build with keywords, as `Bullet` does. Every public module, class, function and method needs a numpy-style docstring (pydocstyle `D` rules, numpy convention; tests are exempt from the "missing docstring" rules). Keep them short: an imperative summary line, plus `Parameters`/`Returns` sections only where the names don't already say it. A method that overrides a documented base method takes `@typing.override` instead of a repeated docstring. Unused imports and variables are reported but never auto-removed (`unfixable`), because they're often unused only until the next edit. `data/tanks.py` is hand-aligned and excluded from the formatter only.
 

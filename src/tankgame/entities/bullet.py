@@ -2,13 +2,17 @@
 
 import math
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .tank import Tank
 
 
 @dataclass(eq=False, repr=False)
 class Bullet:
     """A projectile. Also used for freeze/flame particles and orbiters."""
 
-    owner: object
+    owner: Tank
     x: float
     y: float
     vx: float

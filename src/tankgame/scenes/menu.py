@@ -46,7 +46,7 @@ class Backdrop:
             it[0] = (it[0] + it[4] * dt) % C.SCREEN_W
             it[1] = (it[1] + it[5] * dt) % C.SCREEN_H
             it[3] += 0.3 * dt
-            n = it[2]
+            n = int(it[2])
             pts = [
                 (
                     it[0] + math.cos(it[3] + i * math.tau / n) * 26,
