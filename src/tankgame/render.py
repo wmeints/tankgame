@@ -2,6 +2,7 @@
 
 import colorsys
 import math
+from typing import NamedTuple
 
 import pygame
 
@@ -28,8 +29,18 @@ def circle(surf, color, center, r, outline_w):
     pygame.draw.circle(surf, color, center, max(1, r - max(1, outline_w)))
 
 
-def draw_tank_body(surf, tdef, x, y, r, angle, color, spin=0.0, flash=False):
-    """Draw barrels, blades and body of a tank at screen position (x, y) with radius r."""
+class Pose(NamedTuple):
+    """Where a tank is drawn: screen position, radius and facing angle."""
+
+    x: float
+    y: float
+    r: float
+    angle: float
+
+
+def draw_tank_body(surf, tdef, pose, color, spin=0.0, flash=False):
+    """Draw barrels, blades and body of a tank at the given pose."""
+    x, y, r, angle = pose
     ow = max(1, int(r * 0.12))
     barrel_col = _lighten(C.BARREL, 0.5) if flash else C.BARREL
     if tdef["grinder"]:
@@ -52,8 +63,12 @@ def draw_tank_body(surf, tdef, x, y, r, angle, color, spin=0.0, flash=False):
         if b["flare"]:
             w0 *= 0.75
         tx, ty = bx + ca * length, by + sa * length
-        pts = [(bx + px * w0, by + py * w0), (tx + px * w1, ty + py * w1),
-               (tx - px * w1, ty - py * w1), (bx - px * w0, by - py * w0)]
+        pts = [
+            (bx + px * w0, by + py * w0),
+            (tx + px * w1, ty + py * w1),
+            (tx - px * w1, ty - py * w1),
+            (bx - px * w0, by - py * w0),
+        ]
         col = barrel_col
         if b["kind"] == "laser":
             col = (190, 140, 200)
@@ -75,12 +90,16 @@ class Camera:
         self.shake = 0.0
 
     def to_screen(self, x, y):
-        return ((x - self.x) * self.zoom + C.SCREEN_W / 2,
-                (y - self.y) * self.zoom + C.SCREEN_H / 2)
+        return (
+            (x - self.x) * self.zoom + C.SCREEN_W / 2,
+            (y - self.y) * self.zoom + C.SCREEN_H / 2,
+        )
 
     def to_world(self, sx, sy):
-        return ((sx - C.SCREEN_W / 2) / self.zoom + self.x,
-                (sy - C.SCREEN_H / 2) / self.zoom + self.y)
+        return (
+            (sx - C.SCREEN_W / 2) / self.zoom + self.x,
+            (sy - C.SCREEN_H / 2) / self.zoom + self.y,
+        )
 
     def visible(self, x, y, r):
         sx, sy = self.to_screen(x, y)
@@ -157,8 +176,13 @@ def draw_bullet(surf, cam, b, color):
         circle(surf, color, (sx, sy), r, ow)
     elif b.kind == "orbiter":
         a = b.owner.orbit_phase * 2
-        pts = [(sx + math.cos(a + i * math.tau / 3) * r * 1.3,
-                sy + math.sin(a + i * math.tau / 3) * r * 1.3) for i in range(3)]
+        pts = [
+            (
+                sx + math.cos(a + i * math.tau / 3) * r * 1.3,
+                sy + math.sin(a + i * math.tau / 3) * r * 1.3,
+            )
+            for i in range(3)
+        ]
         poly(surf, color, pts, ow)
     else:
         circle(surf, color, (sx, sy), r, ow)
@@ -172,10 +196,11 @@ def draw_tank(surf, cam, t, color, time):
     if t.alpha < 0.999:
         size = int(r * 6) + 4
         tmp = pygame.Surface((size, size), pygame.SRCALPHA)
-        draw_tank_body(tmp, t.tdef, size / 2, size / 2, r, t.angle, color,
-                       spin=time * 4, flash=t.flash > 0)
+        pose = Pose(size / 2, size / 2, r, t.angle)
+        draw_tank_body(tmp, t.tdef, pose, color, spin=time * 4, flash=t.flash > 0)
         tmp.set_alpha(int(255 * t.alpha))
         surf.blit(tmp, (sx - size / 2, sy - size / 2))
     else:
-        draw_tank_body(surf, t.tdef, sx, sy, r, t.angle, color, spin=time * 4, flash=t.flash > 0)
+        pose = Pose(sx, sy, r, t.angle)
+        draw_tank_body(surf, t.tdef, pose, color, spin=time * 4, flash=t.flash > 0)
     return sx, sy, r

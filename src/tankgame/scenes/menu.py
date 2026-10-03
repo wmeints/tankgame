@@ -4,9 +4,8 @@ import random
 import pygame
 
 from .. import config as C
-from .. import meta
+from .. import meta, ui
 from .. import render as R
-from .. import ui
 from ..data import progression as P
 from ..data.tanks import TANKS
 from . import Scene
@@ -18,9 +17,17 @@ class Backdrop:
     """Slowly drifting shapes behind the menus."""
 
     def __init__(self):
-        self.items = [[random.uniform(0, C.SCREEN_W), random.uniform(0, C.SCREEN_H),
-                       random.choice((3, 4, 5)), random.uniform(0, math.tau),
-                       random.uniform(-12, 12), random.uniform(-12, 12)] for _ in range(26)]
+        self.items = [
+            [
+                random.uniform(0, C.SCREEN_W),
+                random.uniform(0, C.SCREEN_H),
+                random.choice((3, 4, 5)),
+                random.uniform(0, math.tau),
+                random.uniform(-12, 12),
+                random.uniform(-12, 12),
+            ]
+            for _ in range(26)
+        ]
         self.t = 0.0
 
     def draw(self, surf, dt=1 / 60):
@@ -36,8 +43,13 @@ class Backdrop:
             it[1] = (it[1] + it[5] * dt) % C.SCREEN_H
             it[3] += 0.3 * dt
             n = it[2]
-            pts = [(it[0] + math.cos(it[3] + i * math.tau / n) * 26,
-                    it[1] + math.sin(it[3] + i * math.tau / n) * 26) for i in range(n)]
+            pts = [
+                (
+                    it[0] + math.cos(it[3] + i * math.tau / n) * 26,
+                    it[1] + math.sin(it[3] + i * math.tau / n) * 26,
+                )
+                for i in range(n)
+            ]
             R.poly(surf, colors[n], pts, 3)
 
 
@@ -65,16 +77,20 @@ class MenuScene(Scene):
             ui.Button((x, 500, 320, 50), "Prize Wheel", self.wheel, color=(220, 150, 60)),
             ui.Button((x, 560, 320, 50), "Codes", self.codes, color=(110, 110, 220)),
             ui.Button((x, 620, 155, 46), "", self.cycle_diff, size=26, color=(120, 120, 140)),
-            ui.Button((x + 165, 620, 155, 46), "Quit", self.game.quit, size=26, color=(200, 90, 90)),
+            ui.Button(
+                (x + 165, 620, 155, 46), "Quit", self.game.quit, size=26, color=(200, 90, 90)
+            ),
         ]
         self.diff_btn = self.buttons[5]
 
     def play(self):
         from .arena import ArenaScene
+
         self.game.goto(ArenaScene(self.game))
 
     def shop(self):
         from .shop import ShopScene
+
         self.game.goto(ShopScene(self.game))
 
     def quests(self):
@@ -82,6 +98,7 @@ class MenuScene(Scene):
 
     def wheel(self):
         from .wheel import WheelScene
+
         self.game.goto(WheelScene(self.game))
 
     def codes(self):
@@ -109,9 +126,11 @@ class MenuScene(Scene):
         cx = C.SCREEN_W // 2
         bob = math.sin(self.t * 2) * 6
         ui.text(surf, "TANK GAME!", 110, (cx, 120 + bob), C.WHITE, anchor="center")
-        ui.text(surf, "offline edition", 30, (cx, 185), (60, 60, 70), anchor="center", outline=False)
-        R.draw_tank_body(surf, TANKS["Basic"], cx - 450, 140, 40, self.t, C.PLAYER_COLOR)
-        R.draw_tank_body(surf, TANKS["Orchestra"], cx + 450, 140, 40, -self.t * 0.7, C.ENEMY_COLOR)
+        ui.plain_text(surf, "offline edition", 30, (cx, 185), (60, 60, 70), anchor="center")
+        R.draw_tank_body(surf, TANKS["Basic"], R.Pose(cx - 450, 140, 40, self.t), C.PLAYER_COLOR)
+        R.draw_tank_body(
+            surf, TANKS["Orchestra"], R.Pose(cx + 450, 140, 40, -self.t * 0.7), C.ENEMY_COLOR
+        )
 
         # player card
         card = pygame.Rect(40, 300, 330, 300)
@@ -121,22 +140,39 @@ class MenuScene(Scene):
         ui.text(surf, f"Rank: {P.rank_name(rank)}", 30, (card.x + 16, card.y + 70))
         if rank < P.RANK_COUNT:
             lo, hi = P.rank_threshold(rank), P.rank_threshold(rank + 1)
-            ui.bar(surf, pygame.Rect(card.x + 16, card.y + 102, card.w - 32, 16),
-                   (prof["total_score"] - lo) / (hi - lo), C.XP_YELLOW)
+            ui.bar(
+                surf,
+                pygame.Rect(card.x + 16, card.y + 102, card.w - 32, 16),
+                (prof["total_score"] - lo) / (hi - lo),
+                C.XP_YELLOW,
+            )
         ui.text(surf, f"Best score: {prof['best_score']:,}", 24, (card.x + 16, card.y + 132))
         ui.text(surf, f"Best level: {prof['best_level']}", 24, (card.x + 16, card.y + 160))
         ui.text(surf, f"Total kills: {prof['total_kills']:,}", 24, (card.x + 16, card.y + 188))
         ui.text(surf, f"Rebirths: {prof['rebirths']}", 24, (card.x + 16, card.y + 216))
         if prof["pending_xp"]:
-            ui.text(surf, f"Head start ready: {prof['pending_xp']:,} XP", 22,
-                    (card.x + 16, card.y + 250), C.XP_YELLOW)
+            ui.text(
+                surf,
+                f"Head start ready: {prof['pending_xp']:,} XP",
+                22,
+                (card.x + 16, card.y + 250),
+                C.XP_YELLOW,
+            )
 
         # controls card
         help_rect = pygame.Rect(C.SCREEN_W - 370, 300, 330, 300)
         ui.panel(surf, help_rect, alpha=190)
-        lines = ["WASD - move", "Mouse - aim", "Left click - shoot", "F - auto fire",
-                 "E - upgrades (1-8)", "Q - evolve", "Scroll - zoom", "Esc - pause",
-                 "F11 - fullscreen"]
+        lines = [
+            "WASD - move",
+            "Mouse - aim",
+            "Left click - shoot",
+            "F - auto fire",
+            "E - upgrades (1-8)",
+            "Q - evolve",
+            "Scroll - zoom",
+            "Esc - pause",
+            "F11 - fullscreen",
+        ]
         ui.text(surf, "Controls", 30, (help_rect.x + 16, help_rect.y + 14))
         for i, line in enumerate(lines):
             ui.text(surf, line, 24, (help_rect.x + 16, help_rect.y + 52 + i * 26))
@@ -153,7 +189,9 @@ class BackScene(Scene):
 
     def __init__(self, game):
         super().__init__(game)
-        self.back = ui.Button((24, 24, 140, 46), "< Back", self.go_back, color=(120, 120, 140), size=28)
+        self.back = ui.Button(
+            (24, 24, 140, 46), "< Back", self.go_back, color=(120, 120, 140), size=28
+        )
 
     def go_back(self):
         self.game.save()
@@ -184,11 +222,18 @@ class QuestScene(BackScene):
         y = 110
         last_kind = None
         for kind, e in meta.all_quest_entries(self.profile):
-            qid, text, ev, target, mode, reward = meta.QUEST_DEFS[e["id"]]
+            _qid, text, _ev, target, _mode, reward = meta.QUEST_DEFS[e["id"]]
             if kind != last_kind:
-                ui.text(surf, {"Daily": "Daily quests (reset every day)",
-                               "Weekly": "Weekly quests",
-                               "Unique": "Unique quests (once only)"}[kind], 30, (140, y))
+                ui.text(
+                    surf,
+                    {
+                        "Daily": "Daily quests (reset every day)",
+                        "Weekly": "Weekly quests",
+                        "Unique": "Unique quests (once only)",
+                    }[kind],
+                    30,
+                    (140, y),
+                )
                 y += 38
                 last_kind = kind
             row = pygame.Rect(140, y, C.SCREEN_W - 280, 50)
@@ -198,8 +243,14 @@ class QuestScene(BackScene):
             ui.bar(surf, bar, e["progress"] / target, C.XP_YELLOW, radius=4)
             ui.text(surf, f"{int(e['progress']):,}/{target:,}", 18, (bar.right + 10, row.y + 28))
             rtxt = f"{reward:,} gems" if isinstance(reward, int) else f"Tank: {reward}"
-            ui.text(surf, "DONE!" if e["done"] else rtxt, 26, (row.right - 14, row.centery),
-                    C.HP_GREEN if e["done"] else C.GEM_COLOR, anchor="midright")
+            ui.text(
+                surf,
+                "DONE!" if e["done"] else rtxt,
+                26,
+                (row.right - 14, row.centery),
+                C.HP_GREEN if e["done"] else C.GEM_COLOR,
+                anchor="midright",
+            )
             y += 58
 
 
@@ -211,8 +262,9 @@ class CodesScene(BackScene):
         super().__init__(game)
         self.entry = ""
         self.message = "Type a code and press Enter"
-        self.redeem_btn = ui.Button((C.SCREEN_W // 2 - 110, 400, 220, 56), "Redeem", self.redeem,
-                                    color=(80, 200, 100))
+        self.redeem_btn = ui.Button(
+            (C.SCREEN_W // 2 - 110, 400, 220, 56), "Redeem", self.redeem, color=(80, 200, 100)
+        )
 
     def redeem(self):
         self.message = meta.redeem_code(self.profile, self.entry)
@@ -241,10 +293,21 @@ class CodesScene(BackScene):
         pygame.draw.rect(surf, C.WHITE, box, border_radius=10)
         pygame.draw.rect(surf, C.UI_ACCENT, box, 4, border_radius=10)
         cursor = "|" if int(pygame.time.get_ticks() / 500) % 2 == 0 else ""
-        ui.text(surf, self.entry + cursor, 44, box.center, (40, 40, 40), anchor="center", outline=False)
+        ui.plain_text(surf, self.entry + cursor, 44, box.center, (40, 40, 40), anchor="center")
         self.redeem_btn.draw(surf)
         ui.text(surf, self.message, 32, (cx, 500), C.XP_YELLOW, anchor="center")
-        ui.text(surf, f"Codes redeemed: {len(self.profile['redeemed_codes'])}", 24, (cx, 560),
-                anchor="center")
-        ui.text(surf, "Codes come from the real Tank Game's code list.", 22, (cx, 600),
-                (60, 60, 70), anchor="center", outline=False)
+        ui.text(
+            surf,
+            f"Codes redeemed: {len(self.profile['redeemed_codes'])}",
+            24,
+            (cx, 560),
+            anchor="center",
+        )
+        ui.plain_text(
+            surf,
+            "Codes come from the real Tank Game's code list.",
+            22,
+            (cx, 600),
+            (60, 60, 70),
+            anchor="center",
+        )

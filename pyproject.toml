@@ -21,4 +21,57 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.16.10",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.format]
+# Hand-aligned data table; the formatter would put every barrel field on its own line.
+exclude = ["src/tankgame/data/tanks.py"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",   # pycodestyle
+    "F",        # pyflakes
+    "I",        # isort
+    "N",        # pep8-naming
+    "UP",       # pyupgrade
+    "B",        # flake8-bugbear
+    "A",        # flake8-builtins
+    "C4",       # flake8-comprehensions
+    "SIM",      # flake8-simplify
+    "RET",      # flake8-return
+    "PIE",      # flake8-pie
+    "PERF",     # perflint
+    "RUF",      # ruff-specific
+    "C90",      # mccabe cyclomatic complexity
+    "PLR",      # pylint refactor: branches, statements, returns, args
+]
+# Report, don't auto-delete: the edit hook runs `ruff check --fix` after every edit, and an
+# import or variable is often unused only until the next edit of a multi-step change.
+unfixable = ["F401", "F841"]
+ignore = [
+    "PLR2004",  # magic numbers: game balance code is full of tuned constants
+    "N812",     # project convention: `import config as C`, `progression as P`
+    "C408",     # dict(key=value) reads well for balance tables
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 6
+max-branches = 12
+max-statements = 40
+max-returns = 6
+max-nested-blocks = 3
+max-bool-expr = 4
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR0913", "PLR0917"]
+# The evolution tree is a DSL: T(...) and B(...) take many keyword-style fields on purpose.
+"src/tankgame/data/tanks.py" = ["N802", "PLR0913", "PLR0917", "A002"]

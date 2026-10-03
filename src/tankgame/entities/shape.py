@@ -27,13 +27,20 @@ class Shape:
         self.gems = spec["gems"] + (P.SHINY_GEMS if shiny else 0)
         self.toughness = spec["toughness"]
         self.body_damage = spec["body"]
-        self.mass = self.radius ** 2 * 2
+        self.mass = self.radius**2 * 2
         self.alive = True
         self.flash = 0.0
         self.immune = 0.0
-        self.color = C.SHINY_COLOR if shiny else {
-            "square": C.SQUARE_COLOR, "triangle": C.TRIANGLE_COLOR,
-            "pentagon": C.PENTAGON_COLOR, "alpha": C.PENTAGON_COLOR}[kind]
+        self.color = (
+            C.SHINY_COLOR
+            if shiny
+            else {
+                "square": C.SQUARE_COLOR,
+                "triangle": C.TRIANGLE_COLOR,
+                "pentagon": C.PENTAGON_COLOR,
+                "alpha": C.PENTAGON_COLOR,
+            }[kind]
+        )
 
     def update(self, dt: float) -> None:
         self.angle += self.spin * dt

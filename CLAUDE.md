@@ -16,7 +16,10 @@ uv run tankgame                                          # play
 uv run pytest                                            # all tests
 uv run pytest tests/test_tanks.py::test_every_tank_can_fire   # single test
 SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000    # headless smoke test
+uv run ruff format . && uv run ruff check --fix .        # format + lint
 ```
+
+Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12 branches, 40 statements, 6 args). When a function exceeds them, split it into smaller helpers. Don't add `noqa`. Long functions read as a short list of named steps (see `World.update`, `Tank.update`). When there are too many arguments, group the ones that belong together, as `render.Pose` does, or build with keywords, as `Bullet` does. Unused imports and variables are reported but never auto-removed (`unfixable`), because they're often unused only until the next edit. `data/tanks.py` is hand-aligned and excluded from the formatter only.
 
 `--simulate N` draws every menu scene and shop tab once, then autoplays arena runs for N frames with rendering. It exits non-zero if no bot evolved. Run it after changing rendering, scenes or the simulation. Unit tests don't cover those.
 
@@ -46,7 +49,7 @@ SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000    # headless smoke test
 ## Agent harness (`.claude/`)
 
 `.claude/settings.json` sets up the following guardrails:
-- **Stop hook** (`verify-on-stop.sh`): if any `.py`, `pyproject.toml` or `uv.lock` file differs from HEAD, it runs `pytest` and `--simulate 3000` before the turn ends. If either fails, it sends you back to fix it, once per stop attempt.
+- **Stop hook** (`verify-on-stop.sh`): if any `.py`, `pyproject.toml` or `uv.lock` file differs from HEAD, it runs `ruff check`, `ruff format --check`, `pytest` and `--simulate 3000` before the turn ends. If either fails, it sends you back to fix it, once per stop attempt.
 - **PreToolUse(Bash)** (`guard-bash.sh`): blocks launching the interactive game. The game opens a window, blocks the session, and writes the real save file. Verify with `--simulate` instead, or ask the user to play-test.
-- **PostToolUse(Edit|Write)** (`check-syntax.sh`): runs `py_compile` on every Python file you edit.
+- **PostToolUse(Edit|Write)** (`ruff-on-edit.sh`): runs `ruff format` and `ruff check --fix` on every Python file you edit, then sends back any remaining violations (including syntax errors and complexity limits) for you to fix.
 - **Permissions**: edits under `src/` and `tests/` plus test, simulate and local git commands are allowed. Dependency and `.claude/` changes need approval. `git push`, `git reset --hard`, `git clean`, `rm -rf` and writes to the real save directory are denied.

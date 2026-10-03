@@ -3,4 +3,5 @@
 
 def main() -> None:
     from .game import main as _main
+
     _main()

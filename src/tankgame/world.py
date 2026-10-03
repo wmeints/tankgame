@@ -8,7 +8,7 @@ import random
 
 from . import config as C
 from . import meta
-from .ai import Brain, bot_level, random_name, DIFFICULTY
+from .ai import DIFFICULTY, Brain, bot_level, random_name
 from .data import progression as P
 from .entities.bullet import Beam, Ring
 from .entities.shape import Shape
@@ -30,7 +30,7 @@ class World:
         self.bullets = []
         self.beams: list[Beam] = []
         self.rings: list[Ring] = []
-        self.toasts = []                 # [text, ttl, color]
+        self.toasts = []  # [text, ttl, color]
         self.solids = Grid()
         self.bullet_grid = Grid()
         self.bot_respawns = []
@@ -43,9 +43,13 @@ class World:
         self._shape_tick = 0.0
 
         caps = {s: meta.stat_cap(profile, s) for s in P.STATS}
-        self.player = Tank(self, "You", *self.random_spawn(), self.skin_color(0),
-                           is_player=True, caps=caps,
-                           xp_mult=P.rebirth_xp_mult(profile["rebirths"]))
+        self.player = Tank.make_player(
+            self,
+            self.random_spawn(),
+            self.skin_color(0),
+            caps=caps,
+            xp_mult=P.rebirth_xp_mult(profile["rebirths"]),
+        )
         if autoplay:
             self.player.brain = Brain(self.player, "normal")
         self.tanks.append(self.player)
@@ -63,6 +67,7 @@ class World:
     # --- helpers --------------------------------------------------------
     def skin_color(self, t):
         from .render import rainbow
+
         for name, col, _price in P.SKINS:
             if name == self.profile.get("skin"):
                 return col if col else rainbow(t)
@@ -108,7 +113,7 @@ class World:
                 break
         extra = DIFFICULTY[self.difficulty]["caps"]
         caps = {s: max(5, min(P.MAX_CAPS[s], P.BASE_CAP + extra)) for s in P.STATS}
-        bot = Tank(self, random_name(), x, y, C.ENEMY_COLOR, caps=caps)
+        bot = Tank(self, random_name(), (x, y), C.ENEMY_COLOR, caps=caps)
         bot.brain = Brain(bot, self.difficulty)
         lvl = bot_level(self.difficulty, self.player.level)
         bot.add_xp(P.total_xp_for_level(lvl) + random.uniform(0, P.xp_to_next(lvl) * 0.9))
@@ -122,6 +127,7 @@ class World:
 
     def evolution_choices(self):
         from .data.tanks import evolution_options
+
         return evolution_options(self.player.tank_name, self.player.level)
 
     # --- events ---------------------------------------------------------
@@ -184,13 +190,17 @@ class World:
                 self.quest("kill")
         if victim.is_player:
             self.dead = True
-            self.killer_name = killer.name if getattr(killer, "is_tank", False) else (
-                f"a {killer.kind}" if killer is not None else "something")
+            self.killer_name = (
+                killer.name
+                if getattr(killer, "is_tank", False)
+                else (f"a {killer.kind}" if killer is not None else "something")
+            )
             self.sfx("death")
         else:
             self.bot_respawns.append(random.uniform(3, 8))
 
-    def fire_laser(self, owner, x, y, angle, rng, damage, width):
+    def fire_laser(self, owner, start, angle, rng, damage, width):
+        x, y = start
         ca, sa = math.cos(angle), math.sin(angle)
         ex, ey = x + ca * rng, y + sa * rng
         self.beams.append(Beam(x, y, ex, ey, width, C.LASER_COLOR))
@@ -234,17 +244,29 @@ class World:
     def update(self, dt):
         self.time += dt
         if not self.dead:
-            self._score_tick -= dt
-            if self._score_tick <= 0:
-                self._score_tick = 1.0
-                self.quest("score", self.player.score)
+            self._tick_score_quest(dt)
+        self._think(dt)
+        self._move(dt)
+        self.collide(dt)
+        self._remove_expired(dt)
+        self._refill_shapes(dt)
+        self._respawn_bots(dt)
 
+    def _tick_score_quest(self, dt):
+        self._score_tick -= dt
+        if self._score_tick <= 0:
+            self._score_tick = 1.0
+            self.quest("score", self.player.score)
+
+    def _think(self, dt):
         for t in self.tanks:
             if t.brain and t.alive:
                 t.brain.update(dt)
                 if not t.is_player:
                     # trickle XP: simulates the farming other players do off-screen
                     self.credit_xp(t, (1.5 + t.level * 0.15) * dt)
+
+    def _move(self, dt):
         for t in self.tanks:
             if t.alive and not (t.is_player and self.dead):
                 t.update(dt)
@@ -260,8 +282,7 @@ class World:
         for s in self.shapes:
             s.update(dt)
 
-        self.collide(dt)
-
+    def _remove_expired(self, dt):
         self.tanks = [t for t in self.tanks if t.alive or t.is_player]
         self.shapes = [s for s in self.shapes if s.alive]
         self.bullets = [b for b in self.bullets if b.alive]
@@ -274,23 +295,33 @@ class World:
             tst[1] -= dt
         self.toasts = [tst for tst in self.toasts if tst[1] > 0]
 
+    def _refill_shapes(self, dt):
         self._shape_tick -= dt
-        if self._shape_tick <= 0:
-            self._shape_tick = 0.5
-            counts = {k: 0 for k in P.SHAPE_COUNTS}
-            for s in self.shapes:
-                counts[s.kind] += 1
-            for kind, n in P.SHAPE_COUNTS.items():
-                for _ in range(min(4, n - counts[kind])):
-                    self.spawn_shape(kind)
+        if self._shape_tick > 0:
+            return
+        self._shape_tick = 0.5
+        counts = dict.fromkeys(P.SHAPE_COUNTS, 0)
+        for s in self.shapes:
+            counts[s.kind] += 1
+        for kind, n in P.SHAPE_COUNTS.items():
+            for _ in range(min(4, n - counts[kind])):
+                self.spawn_shape(kind)
 
+    def _respawn_bots(self, dt):
         for i in range(len(self.bot_respawns)):
             self.bot_respawns[i] -= dt
         while self.bot_respawns and min(self.bot_respawns) <= 0:
             self.bot_respawns.remove(min(self.bot_respawns))
             self.spawn_bot()
 
+    # --- collisions -----------------------------------------------------
     def collide(self, dt):
+        self._rebuild_solids()
+        self._collide_bullets_with_bullets()
+        self._collide_bullets_with_solids()
+        self._collide_bodies(dt)
+
+    def _rebuild_solids(self):
         solids = self.solids
         solids.clear()
         for s in self.shapes:
@@ -300,109 +331,127 @@ class World:
             if t.alive:
                 solids.insert(t)
 
-        # bullets vs bullets
+    def _collide_bullets_with_bullets(self):
         bg = self.bullet_grid
         bg.clear()
         for b in self.bullets:
             if b.alive and (b.kind in BULLET_VS_BULLET or b.kind == "freeze"):
                 bg.insert(b)
         for cell in bg.cells.values():
-            n = len(cell)
-            if n < 2:
-                continue
-            for i in range(n):
-                a = cell[i]
-                for j in range(i + 1, n):
-                    b = cell[j]
-                    if a.owner is b.owner or not (a.alive and b.alive):
-                        continue
-                    rr = a.radius + b.radius
-                    dx, dy = a.x - b.x, a.y - b.y
-                    if dx * dx + dy * dy > rr * rr:
-                        continue
-                    if a.kind == "freeze" or b.kind == "freeze":
-                        if a.kind == "freeze" and b.kind != "freeze":
-                            b.hp -= 8
-                        elif b.kind == "freeze" and a.kind != "freeze":
-                            a.hp -= 8
-                    else:
-                        ad, bd = a.damage, b.damage
-                        a.hp -= bd * 0.6
-                        b.hp -= ad * 0.6
-                    for x in (a, b):
-                        if x.hp <= 0:
-                            x.alive = False
+            for i, a in enumerate(cell):
+                for b in cell[i + 1 :]:
+                    self._bullet_clash(a, b)
 
-        # bullets vs shapes / tanks
+    @staticmethod
+    def _bullet_clash(a, b):
+        if a.owner is b.owner or not (a.alive and b.alive):
+            return
+        rr = a.radius + b.radius
+        dx, dy = a.x - b.x, a.y - b.y
+        if dx * dx + dy * dy > rr * rr:
+            return
+        if a.kind == "freeze" or b.kind == "freeze":
+            # frost wears down normal bullets, but two frost clouds pass through each other
+            if a.kind == "freeze" and b.kind != "freeze":
+                b.hp -= 8
+            elif b.kind == "freeze" and a.kind != "freeze":
+                a.hp -= 8
+        else:
+            ad, bd = a.damage, b.damage
+            a.hp -= bd * 0.6
+            b.hp -= ad * 0.6
+        for x in (a, b):
+            if x.hp <= 0:
+                x.alive = False
+
+    def _collide_bullets_with_solids(self):
         for b in self.bullets:
             if not b.alive:
                 continue
-            for e in solids.query(b.x, b.y, b.radius):
+            for e in self.solids.query(b.x, b.y, b.radius):
                 if not b.alive:
                     break
-                if e is b.owner or not e.alive:
-                    continue
-                rr = b.radius + e.radius
-                dx, dy = e.x - b.x, e.y - b.y
-                if dx * dx + dy * dy > rr * rr:
-                    continue
-                if e.is_tank and e.immune > 0:
-                    continue
-                key = id(e)
-                if b.kind == "orbiter":
-                    if key in b.cooldowns:
-                        continue
-                    b.cooldowns[key] = 0.25
-                elif key in b.hit:
-                    continue
-                else:
-                    b.hit.add(key)
-                if b.kind == "rocket":
-                    self.explode(b)
-                    b.explode_radius = 0
-                    b.alive = False
-                    break
-                e.take_damage(b.damage, b.owner, self)
-                if e.is_tank:
-                    if b.kind == "freeze":
-                        e.slow_timer = 1.0
-                    elif b.kind == "flame":
-                        e.burn_timer = 2.0
-                        e.burn_dps = max(e.burn_dps if e.burn_timer > 0 else 0, b.damage * 4)
-                        e.burn_source = b.owner
-                # knock the target a little
-                d = math.sqrt(dx * dx + dy * dy) or 1
-                push = 40 * b.radius / max(10.0, e.radius)
-                e.kx += dx / d * push
-                e.ky += dy / d * push
-                b.hp -= e.toughness
-                if b.hp <= 0:
-                    b.alive = False
+                self._bullet_hit(b, e)
 
-        # tank body collisions
+    def _bullet_hit(self, b, e):
+        if e is b.owner or not e.alive:
+            return
+        rr = b.radius + e.radius
+        dx, dy = e.x - b.x, e.y - b.y
+        if dx * dx + dy * dy > rr * rr:
+            return
+        if e.is_tank and e.immune > 0:
+            return
+        if not self._first_contact(b, e):
+            return
+        if b.kind == "rocket":
+            self.explode(b)
+            b.explode_radius = 0
+            b.alive = False
+            return
+        e.take_damage(b.damage, b.owner, self)
+        if e.is_tank:
+            self._apply_status(b, e)
+        # knock the target a little
+        d = math.sqrt(dx * dx + dy * dy) or 1
+        push = 40 * b.radius / max(10.0, e.radius)
+        e.kx += dx / d * push
+        e.ky += dy / d * push
+        b.hp -= e.toughness
+        if b.hp <= 0:
+            b.alive = False
+
+    @staticmethod
+    def _first_contact(b, e):
+        """Bullets hit each target once; orbiters hit again after a short cooldown."""
+        key = id(e)
+        if b.kind == "orbiter":
+            if key in b.cooldowns:
+                return False
+            b.cooldowns[key] = 0.25
+            return True
+        if key in b.hit:
+            return False
+        b.hit.add(key)
+        return True
+
+    @staticmethod
+    def _apply_status(b, tank):
+        if b.kind == "freeze":
+            tank.slow_timer = 1.0
+        elif b.kind == "flame":
+            tank.burn_timer = 2.0
+            tank.burn_dps = max(tank.burn_dps, b.damage * 4)
+            tank.burn_source = b.owner
+
+    def _collide_bodies(self, dt):
         for t in self.tanks:
             if not t.alive:
                 continue
-            for e in solids.query_unique(t.x, t.y, t.radius):
+            for e in self.solids.query_unique(t.x, t.y, t.radius):
                 if e is t or not e.alive or (e.is_tank and e.id < t.id):
                     continue
-                rr = t.radius + e.radius
-                dx, dy = e.x - t.x, e.y - t.y
-                d2 = dx * dx + dy * dy
-                if d2 >= rr * rr:
-                    continue
-                d = math.sqrt(d2) or 1
-                overlap = rr - d
-                nx, ny = dx / d, dy / d
-                total = t.mass + e.mass
-                ft, fe = e.mass / total, t.mass / total
-                t.x -= nx * overlap * ft
-                t.y -= ny * overlap * ft
-                e.x += nx * overlap * fe
-                e.y += ny * overlap * fe
-                t.kx -= nx * 120 * ft
-                t.ky -= ny * 120 * ft
-                e.kx += nx * 120 * fe
-                e.ky += ny * 120 * fe
-                e.take_damage(t.body_damage * 3 * dt, t, self)
-                t.take_damage(e.body_damage * 3 * dt, e, self)
+                self._ram(t, e, dt)
+
+    def _ram(self, t, e, dt):
+        """Push overlapping bodies apart by mass and deal body damage both ways."""
+        rr = t.radius + e.radius
+        dx, dy = e.x - t.x, e.y - t.y
+        d2 = dx * dx + dy * dy
+        if d2 >= rr * rr:
+            return
+        d = math.sqrt(d2) or 1
+        overlap = rr - d
+        nx, ny = dx / d, dy / d
+        total = t.mass + e.mass
+        ft, fe = e.mass / total, t.mass / total
+        t.x -= nx * overlap * ft
+        t.y -= ny * overlap * ft
+        e.x += nx * overlap * fe
+        e.y += ny * overlap * fe
+        t.kx -= nx * 120 * ft
+        t.ky -= ny * 120 * ft
+        e.kx += nx * 120 * fe
+        e.ky += ny * 120 * fe
+        e.take_damage(t.body_damage * 3 * dt, t, self)
+        t.take_damage(e.body_damage * 3 * dt, e, self)

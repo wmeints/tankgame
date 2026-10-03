@@ -15,7 +15,9 @@ class Game:
         pygame.display.set_caption("Tank Game! (offline)")
         self.headless = headless
         try:
-            self.screen = pygame.display.set_mode((C.SCREEN_W, C.SCREEN_H), pygame.SCALED | pygame.RESIZABLE)
+            self.screen = pygame.display.set_mode(
+                (C.SCREEN_W, C.SCREEN_H), pygame.SCALED | pygame.RESIZABLE
+            )
         except pygame.error:
             self.screen = pygame.display.set_mode((C.SCREEN_W, C.SCREEN_H))
         self.clock = pygame.time.Clock()
@@ -39,6 +41,7 @@ class Game:
 
     def run(self):
         from .scenes.menu import MenuScene
+
         self.goto(MenuScene(self))
         acc = 0.0
         while self.running:
@@ -58,6 +61,7 @@ class Game:
             pygame.display.flip()
         # leaving mid-run still counts the run
         from .scenes.arena import ArenaScene
+
         if isinstance(self.scene, ArenaScene) and not self.scene.finished:
             self.scene.world.dead = True
             self.scene.finish()
@@ -107,9 +111,11 @@ def simulate(frames: int) -> int:
             game.goto(scene)
     bots = [t for t in scene.world.tanks if not t.is_player]
     evolved = sum(1 for t in bots if t.tank_name != "Basic")
-    print(f"simulated {frames} frames: deaths={deaths} best player level={best_level} "
-          f"bots={len(bots)} evolved bots={evolved} gems={profile['gems']} "
-          f"rank={meta.rank(profile)}")
+    print(
+        f"simulated {frames} frames: deaths={deaths} best player level={best_level} "
+        f"bots={len(bots)} evolved bots={evolved} gems={profile['gems']} "
+        f"rank={meta.rank(profile)}"
+    )
     pygame.quit()
     return 0 if evolved > 0 else 1
 

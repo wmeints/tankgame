@@ -9,35 +9,96 @@ from .data.tanks import evolution_options
 
 PERSONALITIES = {
     "sniper": dict(
-        tanks=["Scout", "Hitman", "Ace", "Watcher", "Railgun", "Double Railgun", "Wrath",
-               "Fury", "Shadow", "Intruder", "Powerhouse", "Tundra"],
+        tanks=[
+            "Scout",
+            "Hitman",
+            "Ace",
+            "Watcher",
+            "Railgun",
+            "Double Railgun",
+            "Wrath",
+            "Fury",
+            "Shadow",
+            "Intruder",
+            "Powerhouse",
+            "Tundra",
+        ],
         stats=["bspd", "dmg", "reload", "bhp", "speed", "maxhp", "regen", "body"],
-        distance=550),
+        distance=550,
+    ),
     "spammer": dict(
-        tanks=["Spammer", "Thunder", "Storm", "Ultra-Thunder", "Godfather", "Blaster",
-               "Machinima", "Beastmode", "Sparta", "Eater", "Shadow", "Splitstorm",
-               "Trilord", "Orchestra"],
+        tanks=[
+            "Spammer",
+            "Thunder",
+            "Storm",
+            "Ultra-Thunder",
+            "Godfather",
+            "Blaster",
+            "Machinima",
+            "Beastmode",
+            "Sparta",
+            "Eater",
+            "Shadow",
+            "Splitstorm",
+            "Trilord",
+            "Orchestra",
+        ],
         stats=["reload", "dmg", "bhp", "bspd", "maxhp", "speed", "regen", "body"],
-        distance=330),
+        distance=330,
+    ),
     "melee": dict(
-        tanks=["Grinder", "Shredder", "Fuse", "Smashinator", "Plower", "Mega Shredder",
-               "Apollo", "Turbine"],
+        tanks=[
+            "Grinder",
+            "Shredder",
+            "Fuse",
+            "Smashinator",
+            "Plower",
+            "Mega Shredder",
+            "Apollo",
+            "Turbine",
+        ],
         stats=["body", "maxhp", "speed", "regen", "dmg", "reload", "bhp", "bspd"],
-        distance=0),
+        distance=0,
+    ),
     "heavy": dict(
-        tanks=["Double", "Triway", "Triple", "Side Triple", "Orchestra", "Eater", "Devourer",
-               "Railgun", "Spiker", "Double Spiker", "Powerhouse", "Tundra"],
+        tanks=[
+            "Double",
+            "Triway",
+            "Triple",
+            "Side Triple",
+            "Orchestra",
+            "Eater",
+            "Devourer",
+            "Railgun",
+            "Spiker",
+            "Double Spiker",
+            "Powerhouse",
+            "Tundra",
+        ],
         stats=["maxhp", "dmg", "reload", "bhp", "regen", "bspd", "speed", "body"],
-        distance=360),
+        distance=360,
+    ),
     "frost": dict(
         tanks=["Freezer", "Double Freezer", "Triple Freezer", "Mega Freezer", "Flame", "Inferno"],
         stats=["dmg", "reload", "maxhp", "speed", "regen", "bhp", "body", "bspd"],
-        distance=110),
+        distance=110,
+    ),
     "rocket": dict(
-        tanks=["Slide", "Apex", "Rocket", "Guardian", "Blast Lord", "Phoenix", "Scout",
-               "Buckshot", "Double Buckshot", "Megashot"],
+        tanks=[
+            "Slide",
+            "Apex",
+            "Rocket",
+            "Guardian",
+            "Blast Lord",
+            "Phoenix",
+            "Scout",
+            "Buckshot",
+            "Double Buckshot",
+            "Megashot",
+        ],
         stats=["dmg", "reload", "bspd", "maxhp", "speed", "bhp", "regen", "body"],
-        distance=300),
+        distance=300,
+    ),
 }
 STAT_WEIGHTS = [5, 4, 4, 3, 2, 2, 1, 1]
 
@@ -46,15 +107,50 @@ DIFFICULTY = {
     # levels lower, caps: extra stat caps, above: max bot level above the player,
     # newbie: won't hunt the player below this level (unless attacked),
     # hurt: multiplier on damage the player takes
-    "easy":   dict(aim=0.22, react=0.5, bully=15, caps=-1, above=25, newbie=20, hurt=0.5),
+    "easy": dict(aim=0.22, react=0.5, bully=15, caps=-1, above=25, newbie=20, hurt=0.5),
     "normal": dict(aim=0.09, react=0.3, bully=30, caps=0, above=45, newbie=10, hurt=0.8),
-    "hard":   dict(aim=0.03, react=0.15, bully=999, caps=2, above=75, newbie=0, hurt=1.0),
+    "hard": dict(aim=0.03, react=0.15, bully=999, caps=2, above=75, newbie=0, hurt=1.0),
 }
 
-_PRE = ["xX", "Pro", "Epic", "Mega", "Super", "Dark", "Ultra", "Noob", "Turbo", "Sir",
-        "Captain", "Sneaky", "Lil", "Big", "Toxic", "Golden", "Crazy", "Iron"]
-_MID = ["Tank", "Blaster", "Gamer", "Sniper", "Builder", "Ninja", "Dragon", "Shooter",
-        "Panda", "Destroyer", "Wolf", "Bacon", "Robo", "Rocket", "Pixel", "Cannon", "Diep"]
+_PRE = [
+    "xX",
+    "Pro",
+    "Epic",
+    "Mega",
+    "Super",
+    "Dark",
+    "Ultra",
+    "Noob",
+    "Turbo",
+    "Sir",
+    "Captain",
+    "Sneaky",
+    "Lil",
+    "Big",
+    "Toxic",
+    "Golden",
+    "Crazy",
+    "Iron",
+]
+_MID = [
+    "Tank",
+    "Blaster",
+    "Gamer",
+    "Sniper",
+    "Builder",
+    "Ninja",
+    "Dragon",
+    "Shooter",
+    "Panda",
+    "Destroyer",
+    "Wolf",
+    "Bacon",
+    "Robo",
+    "Rocket",
+    "Pixel",
+    "Cannon",
+    "Diep",
+]
 _SUF = ["", "", "_Xx", "123", "2015", "YT", "_TTV", "9000", "_Pro", "77", "_RBX", "xD"]
 
 
@@ -86,7 +182,7 @@ class Brain:
         order = self.prefs["stats"]
         while t.unspent > 0:
             best, best_score = None, None
-            for stat, w in zip(order, STAT_WEIGHTS):
+            for stat, w in zip(order, STAT_WEIGHTS, strict=True):
                 if t.points[stat] >= t.caps[stat]:
                     continue
                 score = t.points[stat] / w
@@ -125,59 +221,89 @@ class Brain:
         return other.alpha > 0.35 or dist < 200
 
     def think(self) -> None:
+        """Pick a mode: flee a threat, hunt prey, farm shapes, or wander."""
         t = self.tank
-        arena = t.arena
-        hp_ratio = t.hp / t.max_hp
-        view = 900 * t.tdef["fov"]
-        near_tanks = [o for o in arena.tanks if o is not t and o.alive
-                      and abs(o.x - t.x) < view and abs(o.y - t.y) < view]
-        threat, threat_d = None, 1e9
-        prey, prey_score = None, 1e9
-        for o in near_tanks:
-            d = math.hypot(o.x - t.x, o.y - t.y)
-            if not self.visible(o, d):
-                continue
-            stronger = o.level >= t.level + 15 or o.score > t.score * 3 + 2000
-            if d < 600 and (stronger or (hp_ratio < 0.35 and d < 450)):
-                if d < threat_d:
-                    threat, threat_d = o, d
-                continue
-            if o.immune > 0:
-                continue
-            attacked_by = t.last_attacker is o and t.attacked_timer > 0
-            if t.level - o.level > self.diff["bully"] and not attacked_by:
-                continue
-            if o.is_player and o.level < self.diff["newbie"] and not attacked_by:
-                continue
-            score = d - (300 if attacked_by else 0) + o.hp * 0.5
-            if score < prey_score:
-                prey, prey_score = o, score
+        threat, prey = self._scan_tanks()
         self.aim_err = random.gauss(0, self.diff["aim"])
-        if threat is not None and (self.personality != "melee" or hp_ratio < 0.5):
+        if threat is not None and (self.personality != "melee" or t.hp / t.max_hp < 0.5):
             self.mode, self.target = "flee", threat
             return
         if prey is not None:
             self.mode, self.target = "hunt", prey
             return
+        shape = self._best_shape()
+        if shape is not None:
+            self.mode, self.target = "farm", shape
+            return
+        self.mode, self.target = "wander", None
+        if self.waypoint is None or math.dist(self.waypoint, (t.x, t.y)) < 150:
+            self.waypoint = self._new_waypoint()
+
+    def _scan_tanks(self):
+        """The closest threat and the most attractive prey in view (either may be None)."""
+        t = self.tank
+        hp_ratio = t.hp / t.max_hp
+        threat, threat_d = None, 1e9
+        prey, prey_score = None, 1e9
+        for o in self._tanks_in_view():
+            d = math.hypot(o.x - t.x, o.y - t.y)
+            if not self.visible(o, d):
+                continue
+            if self._is_threat(o, d, hp_ratio):
+                if d < threat_d:
+                    threat, threat_d = o, d
+                continue
+            score = self._prey_score(o, d)
+            if score is not None and score < prey_score:
+                prey, prey_score = o, score
+        return threat, prey
+
+    def _tanks_in_view(self):
+        t = self.tank
+        view = 900 * t.tdef["fov"]
+        return [
+            o
+            for o in t.arena.tanks
+            if o is not t and o.alive and abs(o.x - t.x) < view and abs(o.y - t.y) < view
+        ]
+
+    def _is_threat(self, o, d, hp_ratio) -> bool:
+        t = self.tank
+        stronger = o.level >= t.level + 15 or o.score > t.score * 3 + 2000
+        return d < 600 and (stronger or (hp_ratio < 0.35 and d < 450))
+
+    def _prey_score(self, o, d):
+        """Lower is more attractive. None if this bot won't attack `o`."""
+        t = self.tank
+        if o.immune > 0:
+            return None
+        attacked_by = t.last_attacker is o and t.attacked_timer > 0
+        if t.level - o.level > self.diff["bully"] and not attacked_by:
+            return None
+        if o.is_player and o.level < self.diff["newbie"] and not attacked_by:
+            return None
+        return d - (300 if attacked_by else 0) + o.hp * 0.5
+
+    def _best_shape(self):
+        t = self.tank
         best, best_v = None, 0
-        for s in arena.shapes_near(t.x, t.y, 750):
+        for s in t.arena.shapes_near(t.x, t.y, 750):
             if s.kind == "alpha" and t.level < 45:
                 continue
             d = math.hypot(s.x - t.x, s.y - t.y)
             v = s.xp / (d + 150)
             if v > best_v:
                 best, best_v = s, v
-        if best is not None:
-            self.mode, self.target = "farm", best
-            return
-        self.mode, self.target = "wander", None
-        if self.waypoint is None or math.hypot(self.waypoint[0] - t.x, self.waypoint[1] - t.y) < 150:
-            if t.level >= 45 and random.random() < 0.6:
-                c = C.ARENA_SIZE / 2
-                self.waypoint = (c + random.uniform(-700, 700), c + random.uniform(-700, 700))
-            else:
-                self.waypoint = (random.uniform(200, C.ARENA_SIZE - 200),
-                                 random.uniform(200, C.ARENA_SIZE - 200))
+        return best
+
+    def _new_waypoint(self):
+        if self.tank.level >= 45 and random.random() < 0.6:
+            c = C.ARENA_SIZE / 2
+            return (c + random.uniform(-700, 700), c + random.uniform(-700, 700))
+        return (
+            random.uniform(200, C.ARENA_SIZE - 200),
+            random.uniform(200, C.ARENA_SIZE - 200),
+        )
 
     def update(self, dt: float) -> None:
         t = self.tank

@@ -1,23 +1,30 @@
 import math
+from dataclasses import dataclass, field
 
 
+@dataclass(eq=False, repr=False)
 class Bullet:
     """A projectile. Also used for freeze/flame particles and orbiters."""
 
-    def __init__(self, owner, x, y, vx, vy, radius, damage, hp, life, kind="bullet"):
-        self.owner = owner
-        self.x, self.y = x, y
-        self.vx, self.vy = vx, vy
-        self.radius = radius
-        self.damage = damage
-        self.hp = self.max_hp = hp
-        self.life = self.max_life = life
-        self.kind = kind
-        self.alive = True
-        self.hit = set()          # ids of targets already hit
-        self.cooldowns = {}       # orbiters: target id -> time until next hit
-        self.slot = 0             # orbiters: slot index
-        self.explode_radius = 0.0
+    owner: object
+    x: float
+    y: float
+    vx: float
+    vy: float
+    radius: float
+    damage: float
+    hp: float
+    life: float
+    kind: str = "bullet"
+    alive: bool = field(default=True, init=False)
+    hit: set = field(default_factory=set, init=False)  # ids of targets already hit
+    cooldowns: dict = field(default_factory=dict, init=False)  # orbiters: target id -> cooldown
+    slot: int = field(default=0, init=False)  # orbiters: slot index
+    explode_radius: float = field(default=0.0, init=False)
+
+    def __post_init__(self):
+        self.max_hp = self.hp
+        self.max_life = self.life
 
     def update(self, dt: float) -> None:
         if self.kind == "orbiter":

@@ -85,7 +85,7 @@ T("Flame", 15, ["Basic"],
   desc="Sets enemies on fire.")
 T("Grinder", 15, ["Basic"], [], hp=1.25, speed=1.05, body=2.5, grinder=8,
   desc="No gun. Spinning blades shred anything you ram.")
-T("Slide", 15, ["Basic"], [B()] + thrusters(), speed=1.15,
+T("Slide", 15, ["Basic"], [B(), *thrusters()], speed=1.15,
   desc="Rear thrusters push you forward while you shoot.")
 
 # --- Spammer branch -------------------------------------------------------
@@ -145,12 +145,13 @@ T("Godfather", 150, ["Ultra-Thunder"],
      delay=i * 0.33) for i, a in enumerate((-22, 0, 22))],
   hp=1.2, desc="Three Ultra-Thunders at once.")
 T("Orchestra", 150, ["Trilord", "Side Triple"],
-  ring(8, width=0.8, reload=0.6, dmg=0.9)
-  + [B(offset=-0.4, width=0.7, length=2.2, reload=0.5, dmg=0.9),
-     B(offset=0.4, width=0.7, length=2.2, reload=0.5, dmg=0.9, delay=0.5)],
+  [*ring(8, width=0.8, reload=0.6, dmg=0.9),
+   B(offset=-0.4, width=0.7, length=2.2, reload=0.5, dmg=0.9),
+   B(offset=0.4, width=0.7, length=2.2, reload=0.5, dmg=0.9, delay=0.5)],
   hp=1.2, desc="Bullets in every direction.")
 T("Double Railgun", 150, ["Railgun"],
-  [B(kind="laser", offset=-0.45, length=2.6, width=0.6, reload=2.0, dmg=9, range=2.2, spread=0, recoil=3),
+  [B(kind="laser", offset=-0.45, length=2.6, width=0.6, reload=2.0, dmg=9, range=2.2, spread=0,
+     recoil=3),
    B(kind="laser", offset=0.45, length=2.6, width=0.6, reload=2.0, dmg=9, range=2.2, spread=0,
      recoil=3, delay=0.5)],
   fov=1.3, desc="Two railguns.")
@@ -163,7 +164,8 @@ T("Wrath", 30, ["Scout"],
   [B(length=2.3, width=0.8, reload=0.8, speed=1.6, dmg=1.2, range=1.5)],
   fov=1.15, desc="Rapid-fire sniper.")
 T("Spiker", 30, ["Scout"],
-  [B(kind="spike", length=2.0, width=1.0, reload=1.6, speed=0.7, dmg=1.8, bhp=6, size=1.3, range=1.6)],
+  [B(kind="spike", length=2.0, width=1.0, reload=1.6, speed=0.7, dmg=1.8, bhp=6, size=1.3,
+     range=1.6)],
   desc="Slow spikes that plow through everything.")
 T("Buckshot", 30, ["Scout"],
   [B(width=1.1, length=1.8, reload=1.4, dmg=0.45, pellets=6, spread=25, range=0.7,
@@ -259,10 +261,11 @@ T("Apex", 30, ["Slide"], fan(3, 30, width=0.75, dmg=0.8) + thrusters(), speed=1.
 T("Blast Lord", 30, ["Slide"],
   [B(kind="rocket", width=1.1, length=1.9, reload=1.6, dmg=2.2, speed=0.55, size=1.2, range=1.4,
      recoil=3)],
-  unlock="rank", desc=f"Rockets! Unlocked at rank 10.")
+  unlock="rank", desc="Rockets! Unlocked at rank 10.")
 T("Rocket", 42, ["Apex", "Blast Lord"],
   [B(kind="rocket", width=1.0, length=1.9, reload=1.4, dmg=2.0, speed=0.55, range=1.4,
-     recoil=2)] + thrusters(),
+     recoil=2),
+   *thrusters()],
   speed=1.15, desc="Rocket launcher.")
 T("Guardian", 42, ["Apex"],
   [B(offset=-0.4, width=0.7, dmg=0.85), B(offset=0.4, width=0.7, dmg=0.85, delay=0.5),
