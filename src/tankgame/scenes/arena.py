@@ -30,52 +30,62 @@ class ArenaScene(Scene):
         self.buttons = []
 
     # --- input ----------------------------------------------------------
-    def handle_event(self, e):  # noqa: C901, PLR0912
-        w = self.world
+    def handle_event(self, e):
         if self.finished or self.paused:
-            for b in self.buttons:
-                if b.handle(e):
-                    self.game.sfx.play("click")
-                    return
-            if e.type == pygame.KEYDOWN and e.key == pygame.K_ESCAPE and self.paused:
-                self.paused = False
-            if (
-                e.type == pygame.KEYDOWN
-                and e.key in (pygame.K_RETURN, pygame.K_SPACE)
-                and self.finished
-            ):
-                self.play_again()
+            self._handle_menu_event(e)
+        elif e.type == pygame.KEYDOWN:
+            self._handle_key(e.key)
+        else:
+            self._handle_mouse(e)
+
+    def _handle_menu_event(self, e):
+        """Input while the pause menu or the death screen is up."""
+        for b in self.buttons:
+            if b.handle(e):
+                self.game.sfx.play("click")
+                return
+        if e.type != pygame.KEYDOWN:
             return
-        if e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_ESCAPE:
-                self.paused = True
-                self.buttons = [
-                    ui.Button((C.SCREEN_W // 2 - 140, 360, 280, 56), "Resume", self.resume),
-                    ui.Button(
-                        (C.SCREEN_W // 2 - 140, 436, 280, 56),
-                        "Leave Game",
-                        self.leave,
-                        color=(200, 90, 90),
-                    ),
-                ]
-            elif e.key == pygame.K_e:
-                self.hud.stats_open = not self.hud.stats_open
-            elif e.key == pygame.K_q:
-                self.hud.evo_open = not self.hud.evo_open
-            elif e.key == pygame.K_f:
-                self.autofire = not self.autofire
-            elif e.key == pygame.K_r:
-                w.rebirth()
-            elif e.key in STAT_KEYS:
-                if w.player.upgrade(STAT_KEYS[e.key]):
-                    w.sfx("click")
-        elif e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
+        if e.key == pygame.K_ESCAPE and self.paused:
+            self.paused = False
+        if e.key in (pygame.K_RETURN, pygame.K_SPACE) and self.finished:
+            self.play_again()
+
+    def _handle_key(self, key):
+        w = self.world
+        if key == pygame.K_ESCAPE:
+            self.pause()
+        elif key == pygame.K_e:
+            self.hud.stats_open = not self.hud.stats_open
+        elif key == pygame.K_q:
+            self.hud.evo_open = not self.hud.evo_open
+        elif key == pygame.K_f:
+            self.autofire = not self.autofire
+        elif key == pygame.K_r:
+            w.rebirth()
+        elif key in STAT_KEYS and w.player.upgrade(STAT_KEYS[key]):
+            w.sfx("click")
+
+    def _handle_mouse(self, e):
+        if e.type == pygame.MOUSEBUTTONDOWN and e.button == 1:
             if not self.hud.handle_click(e.pos):
                 self.mouse_fire = True
         elif e.type == pygame.MOUSEBUTTONUP and e.button == 1:
             self.mouse_fire = False
         elif e.type == pygame.MOUSEWHEEL:
             self.user_zoom = min(1.3, max(0.6, self.user_zoom + e.y * 0.05))
+
+    def pause(self):
+        self.paused = True
+        self.buttons = [
+            ui.Button((C.SCREEN_W // 2 - 140, 360, 280, 56), "Resume", self.resume),
+            ui.Button(
+                (C.SCREEN_W // 2 - 140, 436, 280, 56),
+                "Leave Game",
+                self.leave,
+                color=(200, 90, 90),
+            ),
+        ]
 
     def resume(self):
         self.paused = False
@@ -144,10 +154,23 @@ class ArenaScene(Scene):
         ]
 
     # --- draw -----------------------------------------------------------
-    def draw(self, surf):  # noqa: C901, PLR0912
-        w = self.world
-        cam = self.cam
-        R.draw_background(surf, cam)
+    def draw(self, surf):
+        R.draw_background(surf, self.cam)
+        self._draw_shapes_and_bullets(surf)
+        self._draw_beams(surf)
+        labels = self._draw_tanks(surf)
+        self._draw_rings(surf)
+        for label in labels:
+            self._draw_label(surf, *label)
+        if not self.finished:
+            self.hud.draw(surf)
+        if self.paused:
+            self.draw_overlay(surf, "Paused")
+        elif self.finished:
+            self.draw_death(surf)
+
+    def _draw_shapes_and_bullets(self, surf):
+        w, cam = self.world, self.cam
         for s in w.shapes:
             if cam.visible(s.x, s.y, s.radius * 1.2):
                 R.draw_shape(surf, cam, s)
@@ -155,44 +178,50 @@ class ArenaScene(Scene):
             if cam.visible(b.x, b.y, b.radius * 2):
                 col = w.player.color if b.owner.is_player else C.ENEMY_COLOR
                 R.draw_bullet(surf, cam, b, col)
-        for beam in w.beams:
+
+    def _draw_beams(self, surf):
+        cam = self.cam
+        for beam in self.world.beams:
             f = beam.life / beam.max_life
             x1, y1 = cam.to_screen(beam.x1, beam.y1)
             x2, y2 = cam.to_screen(beam.x2, beam.y2)
             width = max(2, int(beam.width * cam.zoom * f))
             pygame.draw.line(surf, beam.color, (x1, y1), (x2, y2), width)
             pygame.draw.line(surf, C.WHITE, (x1, y1), (x2, y2), max(1, width // 3))
+
+    def _draw_tanks(self, surf):
+        """Draw visible tanks; returns (tank, sx, sy, r) for those that get a name and hp bar."""
+        w, cam = self.world, self.cam
         labels = []
         for t in w.tanks:
             if not t.alive or not cam.visible(t.x, t.y, t.radius * 3):
                 continue
-            col = t.color
-            sx, sy, r = R.draw_tank(surf, cam, t, col, w.time)
+            sx, sy, r = R.draw_tank(surf, cam, t, t.color, w.time)
             if t.alpha > 0.3:
                 labels.append((t, sx, sy, r))
-        for ring in w.rings:
+        return labels
+
+    def _draw_rings(self, surf):
+        cam = self.cam
+        for ring in self.world.rings:
             f = ring.life / ring.max_life
             sx, sy = cam.to_screen(ring.x, ring.y)
             rad = ring.radius * cam.zoom * (1.5 - f * 0.5)
             pygame.draw.circle(surf, ring.color, (sx, sy), max(1, int(rad)), max(1, int(6 * f)))
-        for t, sx, sy, r in labels:
-            if not t.is_player:
-                ui.text(surf, t.name, 18, (sx, sy - r - 18), anchor="center")
-                ui.text(
-                    surf,
-                    f"Lvl {t.level} {t.tank_name}",
-                    14,
-                    (sx, sy - r - 4),
-                    (230, 230, 230),
-                    anchor="center",
-                )
-            R.hp_bar(surf, sx, sy + r + 12, r * 2, t.hp / t.max_hp)
-        if not self.finished:
-            self.hud.draw(surf)
-        if self.paused:
-            self.draw_overlay(surf, "Paused")
-        elif self.finished:
-            self.draw_death(surf)
+
+    @staticmethod
+    def _draw_label(surf, t, sx, sy, r):
+        if not t.is_player:
+            ui.text(surf, t.name, 18, (sx, sy - r - 18), anchor="center")
+            ui.text(
+                surf,
+                f"Lvl {t.level} {t.tank_name}",
+                14,
+                (sx, sy - r - 4),
+                (230, 230, 230),
+                anchor="center",
+            )
+        R.hp_bar(surf, sx, sy + r + 12, r * 2, t.hp / t.max_hp)
 
     def draw_overlay(self, surf, title):
         shade = pygame.Surface((C.SCREEN_W, C.SCREEN_H), pygame.SRCALPHA)
@@ -222,7 +251,8 @@ class ArenaScene(Scene):
             ui.text(surf, "You were destroyed", 64, (cx, 150), anchor="center")
             if w.killer_name:
                 ui.text(surf, f"by {w.killer_name}", 34, (cx, 200), C.ENEMY_COLOR, anchor="center")
-        R.draw_tank_body(surf, p.tdef, cx, 300, 36, -math.pi / 4, p.color, spin=w.time * 3)
+        pose = R.Pose(cx, 300, 36, -math.pi / 4)
+        R.draw_tank_body(surf, p.tdef, pose, p.color, spin=w.time * 3)
         lines = [
             f"Score: {int(p.score):,}",
             f"Level {p.level} {p.tank_name}",

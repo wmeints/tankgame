@@ -220,68 +220,90 @@ class Brain:
     def visible(self, other, dist) -> bool:
         return other.alpha > 0.35 or dist < 200
 
-    def think(self) -> None:  # noqa: C901, PLR0912, PLR0915
+    def think(self) -> None:
+        """Pick a mode: flee a threat, hunt prey, farm shapes, or wander."""
         t = self.tank
-        arena = t.arena
-        hp_ratio = t.hp / t.max_hp
-        view = 900 * t.tdef["fov"]
-        near_tanks = [
-            o
-            for o in arena.tanks
-            if o is not t and o.alive and abs(o.x - t.x) < view and abs(o.y - t.y) < view
-        ]
-        threat, threat_d = None, 1e9
-        prey, prey_score = None, 1e9
-        for o in near_tanks:
-            d = math.hypot(o.x - t.x, o.y - t.y)
-            if not self.visible(o, d):
-                continue
-            stronger = o.level >= t.level + 15 or o.score > t.score * 3 + 2000
-            if d < 600 and (stronger or (hp_ratio < 0.35 and d < 450)):
-                if d < threat_d:
-                    threat, threat_d = o, d
-                continue
-            if o.immune > 0:
-                continue
-            attacked_by = t.last_attacker is o and t.attacked_timer > 0
-            if t.level - o.level > self.diff["bully"] and not attacked_by:
-                continue
-            if o.is_player and o.level < self.diff["newbie"] and not attacked_by:
-                continue
-            score = d - (300 if attacked_by else 0) + o.hp * 0.5
-            if score < prey_score:
-                prey, prey_score = o, score
+        threat, prey = self._scan_tanks()
         self.aim_err = random.gauss(0, self.diff["aim"])
-        if threat is not None and (self.personality != "melee" or hp_ratio < 0.5):
+        if threat is not None and (self.personality != "melee" or t.hp / t.max_hp < 0.5):
             self.mode, self.target = "flee", threat
             return
         if prey is not None:
             self.mode, self.target = "hunt", prey
             return
+        shape = self._best_shape()
+        if shape is not None:
+            self.mode, self.target = "farm", shape
+            return
+        self.mode, self.target = "wander", None
+        if self.waypoint is None or math.dist(self.waypoint, (t.x, t.y)) < 150:
+            self.waypoint = self._new_waypoint()
+
+    def _scan_tanks(self):
+        """The closest threat and the most attractive prey in view (either may be None)."""
+        t = self.tank
+        hp_ratio = t.hp / t.max_hp
+        threat, threat_d = None, 1e9
+        prey, prey_score = None, 1e9
+        for o in self._tanks_in_view():
+            d = math.hypot(o.x - t.x, o.y - t.y)
+            if not self.visible(o, d):
+                continue
+            if self._is_threat(o, d, hp_ratio):
+                if d < threat_d:
+                    threat, threat_d = o, d
+                continue
+            score = self._prey_score(o, d)
+            if score is not None and score < prey_score:
+                prey, prey_score = o, score
+        return threat, prey
+
+    def _tanks_in_view(self):
+        t = self.tank
+        view = 900 * t.tdef["fov"]
+        return [
+            o
+            for o in t.arena.tanks
+            if o is not t and o.alive and abs(o.x - t.x) < view and abs(o.y - t.y) < view
+        ]
+
+    def _is_threat(self, o, d, hp_ratio) -> bool:
+        t = self.tank
+        stronger = o.level >= t.level + 15 or o.score > t.score * 3 + 2000
+        return d < 600 and (stronger or (hp_ratio < 0.35 and d < 450))
+
+    def _prey_score(self, o, d):
+        """Lower is more attractive. None if this bot won't attack `o`."""
+        t = self.tank
+        if o.immune > 0:
+            return None
+        attacked_by = t.last_attacker is o and t.attacked_timer > 0
+        if t.level - o.level > self.diff["bully"] and not attacked_by:
+            return None
+        if o.is_player and o.level < self.diff["newbie"] and not attacked_by:
+            return None
+        return d - (300 if attacked_by else 0) + o.hp * 0.5
+
+    def _best_shape(self):
+        t = self.tank
         best, best_v = None, 0
-        for s in arena.shapes_near(t.x, t.y, 750):
+        for s in t.arena.shapes_near(t.x, t.y, 750):
             if s.kind == "alpha" and t.level < 45:
                 continue
             d = math.hypot(s.x - t.x, s.y - t.y)
             v = s.xp / (d + 150)
             if v > best_v:
                 best, best_v = s, v
-        if best is not None:
-            self.mode, self.target = "farm", best
-            return
-        self.mode, self.target = "wander", None
-        if (
-            self.waypoint is None
-            or math.hypot(self.waypoint[0] - t.x, self.waypoint[1] - t.y) < 150
-        ):
-            if t.level >= 45 and random.random() < 0.6:
-                c = C.ARENA_SIZE / 2
-                self.waypoint = (c + random.uniform(-700, 700), c + random.uniform(-700, 700))
-            else:
-                self.waypoint = (
-                    random.uniform(200, C.ARENA_SIZE - 200),
-                    random.uniform(200, C.ARENA_SIZE - 200),
-                )
+        return best
+
+    def _new_waypoint(self):
+        if self.tank.level >= 45 and random.random() < 0.6:
+            c = C.ARENA_SIZE / 2
+            return (c + random.uniform(-700, 700), c + random.uniform(-700, 700))
+        return (
+            random.uniform(200, C.ARENA_SIZE - 200),
+            random.uniform(200, C.ARENA_SIZE - 200),
+        )
 
     def update(self, dt: float) -> None:
         t = self.tank

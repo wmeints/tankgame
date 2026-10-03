@@ -8,7 +8,7 @@ import pygame
 from . import config as C
 from . import meta, ui
 from .data import progression as P
-from .render import draw_tank_body
+from .render import Pose, draw_tank_body
 
 
 class Hud:
@@ -24,33 +24,36 @@ class Hud:
         return self.scene.world
 
     # --- input ----------------------------------------------------------
-    def handle_click(self, pos) -> bool:  # noqa: C901
+    def handle_click(self, pos) -> bool:
         """Returns True if the click was used by the HUD."""
+        if self.stats_visible() and self._click_stats(pos):
+            return True
+        return self.evo_open and self._click_evolutions(pos)
+
+    def _click_stats(self, pos) -> bool:
         w = self.world
-        if self.stats_visible():
-            for stat, rect in self.stat_buttons.items():
-                if rect.collidepoint(pos):
-                    if w.player.upgrade(stat):
-                        w.sfx("click")
-                    return True
-            if self.stats_rect().collidepoint(pos):
+        for stat, rect in self.stat_buttons.items():
+            if rect.collidepoint(pos):
+                if w.player.upgrade(stat):
+                    w.sfx("click")
                 return True
-        if self.evo_open:
-            for rect, tdef, unlocked in self.evo_cards:
-                if rect.collidepoint(pos):
-                    if unlocked:
-                        w.player_evolve(tdef["name"])
-                        self.evo_open = False
-                    else:
-                        reason = meta.lock_reason(w.profile, tdef["name"])
-                        w.toast(
-                            f"{tdef['name']} is locked ({reason}). Unlock it in the Shop!",
-                            C.ENEMY_COLOR,
-                        )
-                    return True
-            if self.evo_rect().collidepoint(pos):
+        return bool(self.stats_rect().collidepoint(pos))
+
+    def _click_evolutions(self, pos) -> bool:
+        for rect, tdef, unlocked in self.evo_cards:
+            if rect.collidepoint(pos):
+                self._pick_evolution(tdef["name"], unlocked)
                 return True
-        return False
+        return bool(self.evo_rect().collidepoint(pos))
+
+    def _pick_evolution(self, name, unlocked) -> None:
+        w = self.world
+        if unlocked:
+            w.player_evolve(name)
+            self.evo_open = False
+        else:
+            reason = meta.lock_reason(w.profile, name)
+            w.toast(f"{name} is locked ({reason}). Unlock it in the Shop!", C.ENEMY_COLOR)
 
     # --- layout ---------------------------------------------------------
     def stats_visible(self):
@@ -157,7 +160,7 @@ class Hud:
                 else:
                     c = (35, 35, 40)  # locked: buy in the shop
                 pygame.draw.rect(surf, c, r, border_radius=3)
-            ui.text(surf, f"{P.STAT_NAMES[stat]}", 18, (rect.x + 16, y + 4), outline=True)
+            ui.text(surf, f"{P.STAT_NAMES[stat]}", 18, (rect.x + 16, y + 4))
             ui.text(surf, f"[{i + 1}]", 18, (rect.x + 192, y + 4), (200, 200, 200))
             btn = pygame.Rect(rect.x + 236, y, 50, 22)
             if p.can_upgrade(stat):
@@ -195,10 +198,7 @@ class Hud:
             draw_tank_body(
                 surf,
                 t,
-                card.centerx,
-                card.y + 48,
-                16,
-                -math.pi / 4,
+                Pose(card.centerx, card.y + 48, 16, -math.pi / 4),
                 w.player.color if unlocked else (150, 150, 150),
                 spin=w.time * 3,
             )

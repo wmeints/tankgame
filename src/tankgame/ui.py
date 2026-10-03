@@ -16,14 +16,22 @@ def font(size: int) -> pygame.font.Font:
     return f
 
 
-def text(surf, s, size, pos, color=C.TEXT, anchor="topleft", outline=True):  # noqa: PLR0913, PLR0917
+def text(surf, s, size, pos, color=C.TEXT, anchor="topleft"):
+    """Text with a dark outline, readable on any background."""
     f = font(size)
     img = f.render(str(s), True, color)
     rect = img.get_rect(**{anchor: pos})
-    if outline:
-        shadow = f.render(str(s), True, (40, 40, 40))
-        for dx, dy in ((-2, 0), (2, 0), (0, -2), (0, 2), (-1, -1), (1, 1), (-1, 1), (1, -1)):
-            surf.blit(shadow, rect.move(dx, dy))
+    shadow = f.render(str(s), True, (40, 40, 40))
+    for dx, dy in ((-2, 0), (2, 0), (0, -2), (0, 2), (-1, -1), (1, 1), (-1, 1), (1, -1)):
+        surf.blit(shadow, rect.move(dx, dy))
+    surf.blit(img, rect)
+    return rect
+
+
+def plain_text(surf, s, size, pos, color=C.TEXT, anchor="topleft"):
+    """Text without an outline, for dark text on light boxes."""
+    img = font(size).render(str(s), True, color)
+    rect = img.get_rect(**{anchor: pos})
     surf.blit(img, rect)
     return rect
 

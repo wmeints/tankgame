@@ -126,11 +126,11 @@ class MenuScene(Scene):
         cx = C.SCREEN_W // 2
         bob = math.sin(self.t * 2) * 6
         ui.text(surf, "TANK GAME!", 110, (cx, 120 + bob), C.WHITE, anchor="center")
-        ui.text(
-            surf, "offline edition", 30, (cx, 185), (60, 60, 70), anchor="center", outline=False
+        ui.plain_text(surf, "offline edition", 30, (cx, 185), (60, 60, 70), anchor="center")
+        R.draw_tank_body(surf, TANKS["Basic"], R.Pose(cx - 450, 140, 40, self.t), C.PLAYER_COLOR)
+        R.draw_tank_body(
+            surf, TANKS["Orchestra"], R.Pose(cx + 450, 140, 40, -self.t * 0.7), C.ENEMY_COLOR
         )
-        R.draw_tank_body(surf, TANKS["Basic"], cx - 450, 140, 40, self.t, C.PLAYER_COLOR)
-        R.draw_tank_body(surf, TANKS["Orchestra"], cx + 450, 140, 40, -self.t * 0.7, C.ENEMY_COLOR)
 
         # player card
         card = pygame.Rect(40, 300, 330, 300)
@@ -293,9 +293,7 @@ class CodesScene(BackScene):
         pygame.draw.rect(surf, C.WHITE, box, border_radius=10)
         pygame.draw.rect(surf, C.UI_ACCENT, box, 4, border_radius=10)
         cursor = "|" if int(pygame.time.get_ticks() / 500) % 2 == 0 else ""
-        ui.text(
-            surf, self.entry + cursor, 44, box.center, (40, 40, 40), anchor="center", outline=False
-        )
+        ui.plain_text(surf, self.entry + cursor, 44, box.center, (40, 40, 40), anchor="center")
         self.redeem_btn.draw(surf)
         ui.text(surf, self.message, 32, (cx, 500), C.XP_YELLOW, anchor="center")
         ui.text(
@@ -305,12 +303,11 @@ class CodesScene(BackScene):
             (cx, 560),
             anchor="center",
         )
-        ui.text(
+        ui.plain_text(
             surf,
             "Codes come from the real Tank Game's code list.",
             22,
             (cx, 600),
             (60, 60, 70),
             anchor="center",
-            outline=False,
         )

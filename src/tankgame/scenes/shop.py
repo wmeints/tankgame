@@ -175,10 +175,7 @@ class ShopScene(BackScene):
                 R.draw_tank_body(
                     surf,
                     t,
-                    card.centerx,
-                    card.y + 80,
-                    30,
-                    -math.pi / 4 + math.sin(self.t) * 0.3,
+                    R.Pose(card.centerx, card.y + 80, 30, -math.pi / 4 + math.sin(self.t) * 0.3),
                     C.PLAYER_COLOR if owned else (150, 150, 150),
                     spin=self.t * 3,
                 )
@@ -199,9 +196,8 @@ class ShopScene(BackScene):
                 card = self.skin_card(i)
                 ui.panel(surf, card, alpha=200)
                 color = col or R.rainbow(self.t)
-                R.draw_tank_body(
-                    surf, TANKS["Basic"], card.centerx, card.y + 80, 34, -math.pi / 4, color
-                )
+                pose = R.Pose(card.centerx, card.y + 80, 34, -math.pi / 4)
+                R.draw_tank_body(surf, TANKS["Basic"], pose, color)
                 ui.text(surf, name, 30, (card.centerx, card.y + 160), anchor="center")
         for b in self.buttons:
             b.draw(surf)

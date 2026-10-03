@@ -11,19 +11,19 @@ class Tank:
     is_tank = True
     _next_id = 1
 
-    def __init__(self, arena, name, x, y, color, is_player=False, caps=None, xp_mult=1.0):  # noqa: PLR0913, PLR0917
+    def __init__(self, arena, name, pos, color, caps=None):
         self.id = Tank._next_id
         Tank._next_id += 1
         self.arena = arena
         self.name = name
-        self.x, self.y = x, y
+        self.x, self.y = pos
         self.vx = self.vy = 0.0
         self.kx = self.ky = 0.0
         self.angle = 0.0
         self.color = color
-        self.is_player = is_player
+        self.is_player = False
         self.brain = None
-        self.xp_mult = xp_mult
+        self.xp_mult = 1.0
 
         self.score = 0.0
         self.level = 1
@@ -52,6 +52,13 @@ class Tank:
 
         self.set_tank("Basic")
         self.hp = self.max_hp
+
+    @classmethod
+    def make_player(cls, arena, pos, color, caps, xp_mult):
+        tank = cls(arena, "You", pos, color, caps)
+        tank.is_player = True
+        tank.xp_mult = xp_mult
+        return tank
 
     # --- progression ----------------------------------------------------
     def set_tank(self, name: str) -> None:
@@ -117,8 +124,18 @@ class Tank:
         return True
 
     # --- simulation -----------------------------------------------------
-    def update(self, dt: float) -> None:  # noqa: C901, PLR0912, PLR0915
-        arena = self.arena
+    def update(self, dt: float) -> None:
+        self._tick_timers(dt)
+        self._move(dt)
+        self._tick_status_effects(dt)
+        if not self.alive:  # burned to death
+            return
+        self._regenerate(dt)
+        self._update_invisibility(dt)
+        self._update_orbiters(dt)
+        self._update_barrels(dt)
+
+    def _tick_timers(self, dt: float) -> None:
         if self.immune > 0:
             self.immune -= dt
             # like Diep: shooting ends spawn protection early (after 1s)
@@ -130,7 +147,7 @@ class Tank:
         if self.attacked_timer > 0:
             self.attacked_timer -= dt
 
-        # movement
+    def _move(self, dt: float) -> None:
         mag = math.hypot(self.move_x, self.move_y)
         mx, my = (self.move_x / mag, self.move_y / mag) if mag > 0 else (0.0, 0.0)
         speed = self.speed * (0.5 if self.slow_timer > 0 else 1.0)
@@ -146,61 +163,61 @@ class Tank:
         self.x = min(max(self.x, r), C.ARENA_SIZE - r)
         self.y = min(max(self.y, r), C.ARENA_SIZE - r)
 
-        # status effects
+    def _tick_status_effects(self, dt: float) -> None:
         if self.slow_timer > 0:
             self.slow_timer -= dt
         if self.burn_timer > 0:
             self.burn_timer -= dt
             self.take_damage(self.burn_dps * dt, self.burn_source, flash=False)
-            if not self.alive:
-                return
 
-        # regen
+    def _regenerate(self, dt: float) -> None:
         if self.hp < self.max_hp:
             rate = self.regen + (0.05 if self.since_hit > 30 else 0.0)
             self.hp = min(self.max_hp, self.hp + self.max_hp * rate * dt)
 
-        # invisibility
-        if self.tdef["invis"]:
-            moving = math.hypot(self.vx, self.vy) > 40
-            if moving or self.firing:
-                self.still_time = 0
-                self.alpha = min(1.0, self.alpha + 4 * dt)
-            else:
-                self.still_time += dt
-                if self.still_time > 1.0:
-                    self.alpha = max(0.08, self.alpha - 0.6 * dt)
-        else:
+    def _update_invisibility(self, dt: float) -> None:
+        if not self.tdef["invis"]:
             self.alpha = 1.0
+            return
+        moving = math.hypot(self.vx, self.vy) > 40
+        if moving or self.firing:
+            self.still_time = 0
+            self.alpha = min(1.0, self.alpha + 4 * dt)
+        else:
+            self.still_time += dt
+            if self.still_time > 1.0:
+                self.alpha = max(0.08, self.alpha - 0.6 * dt)
 
-        # orbiters
+    def _update_orbiters(self, dt: float) -> None:
+        """Each slot holds a live orbiter Bullet, or a float counting down to its respawn."""
         self.orbit_phase += 2.2 * dt
         for i, o in enumerate(self.orbiters):
             if isinstance(o, Bullet):
                 if not o.alive:
                     self.orbiters[i] = 3.0
+            elif o - dt <= 0:
+                self.orbiters[i] = self._spawn_orbiter(i)
             else:
-                o -= dt
-                if o <= 0:
-                    b = Bullet(
-                        self,
-                        self.x,
-                        self.y,
-                        0,
-                        0,
-                        self.radius * 0.45,
-                        self.bullet_damage * 0.6,
-                        self.bullet_hp * 3,
-                        1e9,
-                        "orbiter",
-                    )
-                    b.slot = i
-                    self.orbiters[i] = b
-                    arena.bullets.append(b)
-                else:
-                    self.orbiters[i] = o
+                self.orbiters[i] = o - dt
 
-        # barrels
+    def _spawn_orbiter(self, slot: int) -> Bullet:
+        b = Bullet(
+            owner=self,
+            x=self.x,
+            y=self.y,
+            vx=0,
+            vy=0,
+            radius=self.radius * 0.45,
+            damage=self.bullet_damage * 0.6,
+            hp=self.bullet_hp * 3,
+            life=1e9,
+            kind="orbiter",
+        )
+        b.slot = slot
+        self.arena.bullets.append(b)
+        return b
+
+    def _update_barrels(self, dt: float) -> None:
         for i, b in enumerate(self.tdef["barrels"]):
             rel = self._reload(b)
             if self.firing:
@@ -224,7 +241,7 @@ class Tank:
         if b["kind"] == "laser":
             rng = 900 * b["range"]
             arena.fire_laser(
-                self, mx, my, a, rng, self.bullet_damage * b["dmg"], b["width"] * self.radius
+                self, (mx, my), a, rng, self.bullet_damage * b["dmg"], b["width"] * self.radius
             )
         else:
             for _ in range(b["pellets"]):
@@ -239,16 +256,16 @@ class Tank:
                 if b["kind"] in ("freeze", "flame"):
                     radius *= 0.6
                 bl = Bullet(
-                    self,
-                    mx,
-                    my,
-                    math.cos(sa) * spd + self.vx * 0.3,
-                    math.sin(sa) * spd + self.vy * 0.3,
-                    radius,
-                    self.bullet_damage * b["dmg"],
-                    self.bullet_hp * b["bhp"],
-                    life,
-                    b["kind"],
+                    owner=self,
+                    x=mx,
+                    y=my,
+                    vx=math.cos(sa) * spd + self.vx * 0.3,
+                    vy=math.sin(sa) * spd + self.vy * 0.3,
+                    radius=radius,
+                    damage=self.bullet_damage * b["dmg"],
+                    hp=self.bullet_hp * b["bhp"],
+                    life=life,
+                    kind=b["kind"],
                 )
                 if b["kind"] == "rocket":
                     bl.explode_radius = 70 * b["size"] + self.radius

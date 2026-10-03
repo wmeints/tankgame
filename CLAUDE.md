@@ -19,7 +19,7 @@ SDL_VIDEODRIVER=dummy uv run tankgame --simulate 3000    # headless smoke test
 uv run ruff format . && uv run ruff check --fix .        # format + lint
 ```
 
-Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12 branches, 40 statements, 6 args). When a function exceeds them, split it into smaller helpers. Don't add `noqa`. The existing `# noqa: C901, PLR09xx` markers are a baseline of functions waiting to be refactored. Unused imports and variables are reported but never auto-removed (`unfixable`), because they're often unused only until the next edit. `data/tanks.py` is hand-aligned and excluded from the formatter only.
+Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12 branches, 40 statements, 6 args). When a function exceeds them, split it into smaller helpers. Don't add `noqa`. Long functions read as a short list of named steps (see `World.update`, `Tank.update`). When there are too many arguments, group the ones that belong together, as `render.Pose` does, or build with keywords, as `Bullet` does. Unused imports and variables are reported but never auto-removed (`unfixable`), because they're often unused only until the next edit. `data/tanks.py` is hand-aligned and excluded from the formatter only.
 
 `--simulate N` draws every menu scene and shop tab once, then autoplays arena runs for N frames with rendering. It exits non-zero if no bot evolved. Run it after changing rendering, scenes or the simulation. Unit tests don't cover those.
 
