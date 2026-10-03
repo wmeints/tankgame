@@ -57,3 +57,19 @@ Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12
 - **PreToolUse(Bash)** (`guard-bash.sh`): blocks launching the interactive game. The game opens a window, blocks the session, and writes the real save file. Verify with `--simulate` instead, or ask the user to play-test.
 - **PostToolUse(Edit|Write)** (`ruff-on-edit.sh`): runs `ruff format` and `ruff check --fix` on every Python file you edit, then sends back any remaining violations (including syntax errors and complexity limits) for you to fix.
 - **Permissions**: edits under `src/` and `tests/` plus test, simulate and local git commands are allowed. Dependency and `.claude/` changes need approval. Pushing branches is allowed, but force-pushes, branch deletes and pushes to `main` are denied, as are `git reset --hard`, `git clean`, `rm -rf` and writes to the real save directory.
+
+## Implementation guidelines 
+
+Prefer deep modules with narrow interfaces for structuring the code. Each module should have tests focusing the public interface.
+
+Before implementing anything make sure you understand the problem. Perform a root cause analysis for bugs and ensure you have a thorough spec for new features.
+
+Follow the implementation ladder to prevent over-engineering:
+
+1. Does it have to be built. No? Don't do it.
+2. Does it already exist in the codebase? Reuse it.
+3. Does the standard library do it? Use it.
+4. Does a project dependency provide it? Use the dependency.
+5. Can this be done with one line? Write the one-liner.
+6. Only then, implement the minimum amount of logic required.
+
