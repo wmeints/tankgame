@@ -46,6 +46,8 @@ class Tank:
         self.burn_timer = 0.0
         self.burn_dps = 0.0
         self.burn_source = None
+        self.frost = 0.0  # frostbite damage still to be dealt
+        self.frost_source = None
         self.alpha = 1.0
         self.still_time = 0.0
         self.orbit_phase = 0.0
@@ -180,6 +182,11 @@ class Tank:
         if self.burn_timer > 0:
             self.burn_timer -= dt
             self.take_damage(self.burn_dps * dt, self.burn_source, flash=False)
+        if self.frost > 0:
+            # drains ~63% per second, with a 5 HP/s floor so the tail ends
+            dmg = min(self.frost, max(self.frost, 5.0) * dt)
+            self.frost -= dmg
+            self.take_damage(dmg, self.frost_source, flash=False)
 
     def _regenerate(self, dt: float) -> None:
         if self.hp < self.max_hp:

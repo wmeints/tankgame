@@ -2,6 +2,8 @@ import copy
 import random
 from types import SimpleNamespace
 
+import pytest
+
 from tankgame import config as C
 from tankgame import save
 from tankgame.data.tanks import ANY, TANKS, evolution_options
@@ -72,3 +74,35 @@ def test_burn_rate_resets_after_burn_expires():
     tank.burn_timer = 0
     w._apply_status(_flame(2), tank)
     assert tank.burn_dps == 8
+
+
+def _frost_hit(w, tank, damage):
+    shooter = w.tanks[2]
+    shooter.immune = tank.immune = 0
+    bullet = SimpleNamespace(
+        kind="freeze", damage=damage, owner=shooter, x=tank.x, y=tank.y, radius=5, hp=1, hit=set()
+    )
+    w._bullet_hit(bullet, tank)
+
+
+def test_freeze_deals_no_instant_damage_to_tanks():
+    w = World(copy.deepcopy(save.DEFAULT_PROFILE))
+    tank = w.tanks[1]
+    hp = tank.hp
+    _frost_hit(w, tank, 10)
+    assert tank.hp == hp
+    assert tank.slow_timer > 0
+
+
+def test_frostbite_deals_reduced_damage_over_time():
+    w = World(copy.deepcopy(save.DEFAULT_PROFILE))
+    tank = w.tanks[1]
+    tank.max_hp = tank.hp = 1000
+    _frost_hit(w, tank, 100)
+    for _ in range(60):
+        tank._tick_status_effects(C.DT)
+    assert 950 < tank.hp < 960  # about 63% of the 70 HP lands in the first second
+    for _ in range(600):
+        tank._tick_status_effects(C.DT)
+    assert tank.frost == 0
+    assert tank.hp == pytest.approx(930)
