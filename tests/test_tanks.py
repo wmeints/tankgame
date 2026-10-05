@@ -99,8 +99,9 @@ def test_frostbite_deals_reduced_damage_over_time():
     tank = w.tanks[1]
     tank.max_hp = tank.hp = 1000
     _frost_hit(w, tank, 100)
-    tank._tick_status_effects(1.0)
-    assert 900 < tank.hp < 970  # part of the frost lands after one second
+    for _ in range(60):
+        tank._tick_status_effects(C.DT)
+    assert 950 < tank.hp < 960  # about 63% of the 70 HP lands in the first second
     for _ in range(600):
         tank._tick_status_effects(C.DT)
     assert tank.frost == 0
