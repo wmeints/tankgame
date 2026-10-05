@@ -116,11 +116,13 @@ DIFFICULTY = {
     # aim: aim error, react: seconds between decisions, bully: won't hunt tanks this many
     # levels lower, caps: extra stat caps, above: max bot level above the player,
     # newbie: won't hunt the player below this level (unless attacked),
-    # hurt: multiplier on damage the player takes
-    "easy": dict(aim=0.22, react=0.5, bully=15, caps=-1, above=25, newbie=20, hurt=0.5),
-    "normal": dict(aim=0.09, react=0.3, bully=30, caps=0, above=45, newbie=10, hurt=0.8),
-    "hard": dict(aim=0.03, react=0.15, bully=999, caps=2, above=75, newbie=0, hurt=1.0),
+    # hurt: multiplier on damage the player takes,
+    # pace: max points in Movement Speed and Fire Rate
+    "easy": dict(aim=0.22, react=0.5, bully=15, caps=-1, above=10, newbie=20, hurt=0.5, pace=2),
+    "normal": dict(aim=0.09, react=0.3, bully=30, caps=0, above=25, newbie=10, hurt=0.8, pace=4),
+    "hard": dict(aim=0.03, react=0.15, bully=999, caps=2, above=75, newbie=0, hurt=1.0, pace=99),
 }
+PACE_STATS = ("speed", "reload")
 
 _PRE = [
     "xX",
@@ -173,6 +175,15 @@ def bot_level(difficulty: str, player_level: int) -> int:
     """Return a random spawn level for a bot, skewed low and capped relative to the player."""
     top = min(P.MAX_LEVEL, max(20, player_level + DIFFICULTY[difficulty]["above"]))
     return 1 + int((top - 1) * random.random() ** 1.6)
+
+
+def bot_caps(difficulty: str) -> dict:
+    """Return a bot's stat caps, with Movement Speed and Fire Rate held to the difficulty's pace."""
+    d = DIFFICULTY[difficulty]
+    caps = {s: max(5, min(P.MAX_CAPS[s], P.BASE_CAP + d["caps"])) for s in P.STATS}
+    for s in PACE_STATS:
+        caps[s] = min(caps[s], d["pace"])
+    return caps
 
 
 class Brain:

@@ -8,7 +8,7 @@ import random
 
 from . import config as C
 from . import meta
-from .ai import DIFFICULTY, Brain, bot_level, random_name
+from .ai import DIFFICULTY, Brain, bot_caps, bot_level, random_name
 from .data import progression as P
 from .entities.bullet import Beam, Ring
 from .entities.shape import Shape
@@ -119,9 +119,7 @@ class World:
             p = self.player
             if math.hypot(x - p.x, y - p.y) > (1400 if far else 900):
                 break
-        extra = DIFFICULTY[self.difficulty]["caps"]
-        caps = {s: max(5, min(P.MAX_CAPS[s], P.BASE_CAP + extra)) for s in P.STATS}
-        bot = Tank(self, random_name(), (x, y), C.ENEMY_COLOR, caps=caps)
+        bot = Tank(self, random_name(), (x, y), C.ENEMY_COLOR, caps=bot_caps(self.difficulty))
         bot.brain = Brain(bot, self.difficulty)
         lvl = bot_level(self.difficulty, self.player.level)
         bot.add_xp(P.total_xp_for_level(lvl) + random.uniform(0, P.xp_to_next(lvl) * 0.9))
