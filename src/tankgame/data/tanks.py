@@ -82,7 +82,7 @@ T("Double", 15, ["Basic"],
 T("Freezer", 15, ["Basic"],
   [B(kind="freeze", length=1.6, width=1.0, reload=0.08, dmg=0.12, range=0.3,
      spread=22, speed=1.1, flare=True, recoil=0.1)],
-  desc="Freezing cone that slows enemies and destroys bullets.")
+  desc="Freezing cone that slows, frostbites and destroys bullets.")
 T("Flame", 15, ["Basic"],
   [B(kind="flame", length=1.6, width=1.0, reload=0.08, dmg=0.1, range=0.3,
      spread=22, speed=1.1, flare=True, recoil=0.1)],

@@ -426,7 +426,8 @@ class World:
             b.explode_radius = 0
             b.alive = False
             return
-        e.take_damage(b.damage, b.owner, self)
+        if b.kind != "freeze" or not e.is_tank:
+            e.take_damage(b.damage, b.owner, self)
         if e.is_tank:
             self._apply_status(b, e)
         # knock the target a little
@@ -456,6 +457,9 @@ class World:
     def _apply_status(b, tank):
         if b.kind == "freeze":
             tank.slow_timer = 1.0
+            # frostbite: tanks take a share of the hit over time instead of all at once
+            tank.frost += b.damage * 0.7
+            tank.frost_source = b.owner
         elif b.kind == "flame":
             old_dps = tank.burn_dps if tank.burn_timer > 0 else 0
             tank.burn_dps = max(old_dps, b.damage * 4)
