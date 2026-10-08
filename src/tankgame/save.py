@@ -42,7 +42,7 @@ DEFAULT_PROFILE: dict[str, Any] = {
     "version": SAVE_VERSION,
     "gems": P.STARTING_GEMS,
     "caps": dict.fromkeys(P.STATS, 0),  # cap upgrades bought per stat
-    "unlocked_tanks": [],  # shop / quest / wheel tanks
+    "unlocked_tanks": [],  # shop / quest tanks
     "skins": ["Classic"],
     "skin": "Classic",
     "difficulty": "normal",
@@ -52,8 +52,6 @@ DEFAULT_PROFILE: dict[str, Any] = {
     "best_level": 1,
     "rebirths": 0,
     "pending_xp": 0,  # head start for next run
-    "spins": 0,
-    "last_free_spin": "",
     "redeemed_codes": [],
     "shape_counts": {"square": 0, "triangle": 0, "pentagon": 0, "alpha": 0, "shiny": 0},
     "quests": {"daily_date": "", "daily": [], "weekly_id": "", "weekly": [], "unique": {}},

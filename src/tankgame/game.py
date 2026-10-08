@@ -90,15 +90,19 @@ def simulate(frames: int) -> int:
     os.environ.setdefault("SDL_VIDEODRIVER", "dummy")
     from . import meta
     from .scenes.arena import ArenaScene
+    from .scenes.index import TankIndexScene
     from .scenes.menu import MenuScene, QuestScene
     from .scenes.shop import ShopScene
-    from .scenes.wheel import WheelScene
 
     profile = copy.deepcopy(S.DEFAULT_PROFILE)
     game = Game(headless=True, profile=profile)
     # draw every menu once
-    for cls in (MenuScene, ShopScene, QuestScene, WheelScene):
+    for cls in (MenuScene, ShopScene, QuestScene):
         cls(game).draw(game.screen)
+    index = TankIndexScene(game)
+    for _ in range(2):
+        index.draw(game.screen)
+        index.scroll_by(10**6)
     for tab in range(3):
         sh = ShopScene(game)
         sh.set_tab(tab)

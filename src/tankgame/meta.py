@@ -1,4 +1,4 @@
-"""Meta progression rules: quests, codes, wheel, shop, ranks, rebirth."""
+"""Meta progression rules: quests, codes, shop, ranks, rebirth."""
 
 import datetime
 import random
@@ -95,7 +95,7 @@ def grant_reward(profile: dict, reward) -> str:
 
 
 def redeem_code(profile: dict, code: str) -> str:
-    """Redeem a code for gems, head-start XP or spins, and return a status message."""
+    """Redeem a code for gems or head-start XP, and return a status message."""
     code = code.strip().upper()
     if code not in P.CODES:
         return "Invalid code."
@@ -106,47 +106,8 @@ def redeem_code(profile: dict, code: str) -> str:
     if kind == "gems":
         profile["gems"] += val
         return f"+{val:,} gems!"
-    if kind == "xp":
-        profile["pending_xp"] += val
-        return f"+{val:,} XP head start on your next run!"
-    profile["spins"] += val
-    return f"+{val} spin{'s' if val > 1 else ''}!"
-
-
-def can_spin(profile: dict) -> bool:
-    """Return whether the free daily spin or a bought spin is available."""
-    return profile["last_free_spin"] != today() or profile["spins"] > 0
-
-
-def use_spin(profile: dict) -> None:
-    """Use the free daily spin if it is unused, otherwise one bought spin."""
-    if profile["last_free_spin"] != today():
-        profile["last_free_spin"] = today()
-    else:
-        profile["spins"] -= 1
-
-
-def pick_prize(rng=random) -> int:
-    """Pick a weighted random wheel prize and return its index in `WHEEL_PRIZES`."""
-    weights = [p[3] for p in P.WHEEL_PRIZES]
-    return rng.choices(range(len(P.WHEEL_PRIZES)), weights=weights)[0]
-
-
-def apply_prize(profile: dict, idx: int) -> str:
-    """Grant the wheel prize at `idx` and return a message describing it."""
-    label, kind, val, _w = P.WHEEL_PRIZES[idx]
-    if kind == "gems":
-        profile["gems"] += val
-    elif kind == "xp":
-        profile["pending_xp"] += val
-    elif kind == "spins":
-        profile["spins"] += val
-    elif kind == "tank":
-        if val in profile["unlocked_tanks"]:
-            profile["gems"] += 25000
-            return "ULTRASHIP again! +25,000 gems instead"
-        profile["unlocked_tanks"].append(val)
-    return f"You won {label}!"
+    profile["pending_xp"] += val
+    return f"+{val:,} XP head start on your next run!"
 
 
 def stat_cap(profile: dict, stat: str) -> int:
@@ -181,7 +142,7 @@ def tank_unlocked(profile: dict, name: str) -> bool:
     t = TANKS[name]
     if t["unlock"] == "rank":
         return rank(profile) >= P.BLAST_LORD_RANK
-    if t["unlock"] in ("quest", "wheel") or t["price"] > 0:
+    if t["unlock"] == "quest" or t["price"] > 0:
         return name in profile["unlocked_tanks"]
     return True
 
@@ -193,9 +154,22 @@ def lock_reason(profile: dict, name: str) -> str:
         return f"Rank {P.BLAST_LORD_RANK}"
     if t["unlock"] == "quest":
         return "Quest"
-    if t["unlock"] == "wheel":
-        return "Wheel"
     return f"{t['price']:,} gems"
+
+
+def how_to_get(name: str) -> str:
+    """Return a sentence saying how the player gets the named tank, for the tank index."""
+    t = TANKS[name]
+    if not t["parents"]:
+        return "Starting tank"
+    if t["unlock"] == "rank":
+        return f"Reach rank {P.BLAST_LORD_RANK}, then evolve"
+    if t["unlock"] == "quest":
+        text = next(q[1] for q in P.UNIQUE_QUESTS if q[5] == name)
+        return f"Quest: {text}"
+    if t["price"] > 0:
+        return f"Buy in the Shop for {t['price']:,} gems"
+    return "Evolve for free"
 
 
 def buy_tank(profile: dict, name: str) -> bool:

@@ -239,13 +239,14 @@ UNIQUE_QUESTS = [
     ("u_twin", "Destroy 1,000 triangles", "shape:triangle", 1000, "sum", "Twinblast"),
     ("u_lvl105", "Reach level 105", "level", 105, "max", 30000),
     ("u_kill100", "Destroy 100 tanks", "kill", 100, "sum", 50000),
+    ("u_ultra", "Destroy 300 tanks", "kill", 300, "sum", "Ultraship"),
 ]
 DAILY_COUNT = 3
 WEEKLY_COUNT = 2
 
 
 # --- Codes (from the original game's code list) ----------------------------
-# value: ("gems", n) | ("xp", n) | ("spins", n)
+# value: ("gems", n) | ("xp", n)
 
 CODES = {
     "HEADSTART": ("gems", 25000),
@@ -257,24 +258,7 @@ CODES = {
     "REBALANCEAGAIN": ("xp", 250000),
     "NEWPORTALS": ("xp", 200000),
     "APOLLO": ("xp", 500000),
-    "TANKGAME2": ("spins", 1),
-    "THANKSGIVING": ("spins", 2),
 }
-
-
-# --- Prize wheel -----------------------------------------------------------
-# (label, kind, value, weight)
-
-WHEEL_PRIZES = [
-    ("500 Gems", "gems", 500, 25),
-    ("1,000 Gems", "gems", 1000, 22),
-    ("2,500 Gems", "gems", 2500, 16),
-    ("5,000 Gems", "gems", 5000, 8),
-    ("Head Start", "xp", 15000, 14),
-    ("Big Head Start", "xp", 60000, 6),
-    ("1 Spin", "spins", 1, 8),
-    ("ULTRASHIP!", "tank", "Ultraship", 1),
-]
 
 
 # --- Skins -----------------------------------------------------------------

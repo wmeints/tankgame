@@ -81,7 +81,7 @@ class MenuScene(Scene):
             ui.Button((x, 300, 320, 64), "PLAY", self.play, size=44, color=(80, 200, 100)),
             ui.Button((x, 380, 320, 50), "Shop", self.shop),
             ui.Button((x, 440, 320, 50), "Quests", self.quests),
-            ui.Button((x, 500, 320, 50), "Prize Wheel", self.wheel, color=(220, 150, 60)),
+            ui.Button((x, 500, 320, 50), "Tank Index", self.index, color=(220, 150, 60)),
             ui.Button((x, 560, 320, 50), "Codes", self.codes, color=(110, 110, 220)),
             ui.Button((x, 620, 155, 46), "", self.cycle_diff, size=26, color=(120, 120, 140)),
             ui.Button(
@@ -106,11 +106,11 @@ class MenuScene(Scene):
         """Open the quest list."""
         self.game.goto(QuestScene(self.game))
 
-    def wheel(self):
-        """Open the prize wheel."""
-        from .wheel import WheelScene
+    def index(self):
+        """Open the tank index."""
+        from .index import TankIndexScene
 
-        self.game.goto(WheelScene(self.game))
+        self.game.goto(TankIndexScene(self.game))
 
     def codes(self):
         """Open the code redemption screen."""
@@ -195,8 +195,6 @@ class MenuScene(Scene):
             ui.text(surf, line, 24, (help_rect.x + 16, help_rect.y + 52 + i * 26))
 
         self.diff_btn.label = prof["difficulty"].title()
-        wheel = self.buttons[3]
-        wheel.label = "Prize Wheel" + (" (FREE!)" if meta.can_spin(prof) else "")
         for b in self.buttons:
             b.draw(surf)
 
