@@ -41,10 +41,10 @@ Ruff is configured in `pyproject.toml` with complexity limits (McCabe 10, max 12
 
 **Data-driven balance** (`data/`):
 - `data/tanks.py`: the full evolution tree, built at import time with `T(...)` calls into the `TANKS` dict. Barrels are built with `B(...)` and the `fan`/`ring` helpers. The module docstring documents every barrel field. `parents` can contain `ANY` ("*"), which means any tank of level 15 or higher. `evolution_options()` holds the tree-walking rules (lock checks happen elsewhere). `price` and `unlock` mark tanks that must be bought or unlocked first.
-- `data/progression.py`: XP curve, stat formulas, shapes, gems, ranks, quests, codes, wheel prizes and skins.
+- `data/progression.py`: XP curve, stat formulas, shapes, gems, ranks, quests, codes and skins.
 - `ai.py` `DIFFICULTY`: difficulty settings for the bots, plus the player damage multiplier (`hurt`).
 
-**Persistent meta-progression** (`save.py`, `meta.py`): the profile is a plain dict persisted as JSON at `tankgame/save.json` in the per-OS app data dir (`%APPDATA%`, `~/Library/Application Support`, or `$XDG_DATA_HOME`/`~/.local/share`). `load()` falls back to the old XDG path on Windows and macOS. `meta.py` has functions that mutate the profile: quests, code redemption, the prize wheel, stat caps, ranks and unlocks. When you add a profile field, add it to `save.DEFAULT_PROFILE`. `migrate()` merges old saves into the defaults, one dict level deep. `Game.save()` does nothing in headless mode. Tests and `--simulate` use a `deepcopy` of `DEFAULT_PROFILE`, never the real save.
+**Persistent meta-progression** (`save.py`, `meta.py`): the profile is a plain dict persisted as JSON at `tankgame/save.json` in the per-OS app data dir (`%APPDATA%`, `~/Library/Application Support`, or `$XDG_DATA_HOME`/`~/.local/share`). `load()` falls back to the old XDG path on Windows and macOS. `meta.py` has functions that mutate the profile: quests, code redemption, stat caps, ranks and unlocks. `meta.how_to_get` describes each tank's unlock route for the tank index (`scenes/index.py`). When you add a profile field, add it to `save.DEFAULT_PROFILE`. `migrate()` merges old saves into the defaults, one dict level deep. `Game.save()` does nothing in headless mode. Tests and `--simulate` use a `deepcopy` of `DEFAULT_PROFILE`, never the real save.
 
 **Misc**: `sfx.py` synthesizes all sounds at runtime, so there are no asset files. Headless mode swaps in `_NoSfx`. `config.py` holds the screen and arena constants and the Diep-style color palette.
 

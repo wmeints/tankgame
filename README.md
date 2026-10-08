@@ -63,9 +63,9 @@ uv run tankgame
   - **Tanks** unlock shop-only evolutions such as Ultra-Thunder, Machinima, Double Buckshot, Smashinator and Railgun (75,000 gems, like the original).
   - **Skins** change your tank color.
 - **Ranks:** your total score across all runs raises your rank. Rank 10 unlocks **Blast Lord**.
-- **Quests:** 3 daily quests, 2 weekly quests and a few one-time unique quests. One of the unique quests unlocks **Twinblast**.
-- **Prize Wheel:** one free spin per day, with a small chance of the **Ultraship**.
-- **Codes:** the real game's codes work here too (HEADSTART, NEWCURRENCY, HAVEFUN, TANKGAME2, ...).
+- **Quests:** 3 daily quests, 2 weekly quests and a few one-time unique quests. Two of the unique quests unlock **Twinblast** and **Ultraship**.
+- **Tank Index:** lists every tank with its evolution level, the tanks it evolves from and how to unlock it.
+- **Codes:** the real game's codes work here too (HEADSTART, NEWCURRENCY, HAVEFUN, APOLLO, ...).
 - **Rebirth:** at level 150 you can rebirth for gems and +5% XP forever.
 - **Difficulty:** pick Easy, Normal or Hard in the main menu.
   - Easy and Normal bots won't hunt brand-new players unless they get shot first.
@@ -80,7 +80,7 @@ use Diep.io's values, scaled up to 150 levels.
 
 All balance numbers are plain Python data:
 
-- `src/tankgame/data/progression.py`: XP curve, stat formulas, shapes, gems, ranks, quests, codes, wheel prizes, skins
+- `src/tankgame/data/progression.py`: XP curve, stat formulas, shapes, gems, ranks, quests, codes, skins
 - `src/tankgame/data/tanks.py`: every tank, its barrels, evolution level, parents and price
 - `src/tankgame/ai.py`: difficulty settings for the bots
 

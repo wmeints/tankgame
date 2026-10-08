@@ -294,7 +294,7 @@ T("Orbitron Sr.", 150, ["Orbitron", "Side Orbitron"],
 T("Ultraship", 60, [ANY],
   [B(angle=a, width=0.9, reload=0.5, dmg=0.9, flare=True, delay=(i % 2) * 0.5)
    for i, a in enumerate((45, 135, 225, 315))] + [B(dmg=1.4, width=0.9)],
-  orbiters=3, hp=1.2, unlock="wheel", desc="Prize wheel legend.")
+  orbiters=3, hp=1.2, unlock="quest", desc="Unlocked by a unique quest.")
 
 
 def evolution_options(current: str, level: int) -> list[dict]:

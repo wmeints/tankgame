@@ -2,6 +2,7 @@ import copy
 
 from tankgame import meta, save
 from tankgame.data import progression as P
+from tankgame.data.tanks import TANKS
 
 
 def fresh():
@@ -88,3 +89,20 @@ def test_legacy_save_is_read_then_moved(monkeypatch, tmp_path):
     prof["gems"] = 1
     save.save(prof)
     assert save.load()["gems"] == 1
+
+
+def test_how_to_get_names_every_unlock_route():
+    assert meta.how_to_get("Basic") == "Starting tank"
+    assert meta.how_to_get("Scout") == "Evolve for free"
+    assert meta.how_to_get("Railgun") == "Buy in the Shop for 75,000 gems"
+    assert meta.how_to_get("Blast Lord") == f"Reach rank {P.BLAST_LORD_RANK}, then evolve"
+    assert meta.how_to_get("Twinblast") == "Quest: Destroy 1,000 triangles"
+    assert all(meta.how_to_get(name) for name in TANKS)
+
+
+def test_ultraship_is_a_quest_reward():
+    prof = fresh()
+    meta.ensure_quests(prof)
+    assert not meta.tank_unlocked(prof, "Ultraship")
+    meta.quest_event(prof, "kill", 300)
+    assert meta.tank_unlocked(prof, "Ultraship")
