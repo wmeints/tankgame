@@ -144,7 +144,7 @@ T("Tundra", 130, ["Powerhouse"],
   hp=1.25, desc="Cannon with frost flanks.")
 T("Sparta", 130, ["Beastmode", "Machinima"], fan(7, 60, reload=0.6, dmg=0.9, width=0.8, flare=True),
   hp=1.2, desc="Seven-barrel phalanx.")
-T("Godfather", 150, ["Ultra-Thunder"],
+T("Ultra-Gunner", 150, ["Ultra-Thunder"],
   [B(angle=a, width=1.2, length=2.0, reload=0.18, dmg=0.6, spread=15, flare=True,
      delay=i * 0.33) for i, a in enumerate((-22, 0, 22))],
   hp=1.2, desc="Three Ultra-Thunders at once.")
