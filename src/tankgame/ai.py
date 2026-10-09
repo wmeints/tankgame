@@ -42,7 +42,7 @@ PERSONALITIES: dict[str, Personality] = {
             "Thunder",
             "Storm",
             "Ultra-Thunder",
-            "Godfather",
+            "Ultra-Gunner",
             "Blaster",
             "Machinima",
             "Beastmode",
