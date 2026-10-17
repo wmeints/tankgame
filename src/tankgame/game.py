@@ -102,7 +102,7 @@ def simulate(frames: int) -> int:
     index = TankIndexScene(game)
     for _ in range(2):
         index.draw(game.screen)
-        index.scroll_by(10**6)
+        index.pan_by(10**6, 10**6)
     for tab in range(3):
         sh = ShopScene(game)
         sh.set_tab(tab)

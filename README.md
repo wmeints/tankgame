@@ -64,7 +64,7 @@ uv run tankgame
   - **Skins** change your tank color.
 - **Ranks:** your total score across all runs raises your rank. Rank 10 unlocks **Blast Lord**.
 - **Quests:** 3 daily quests, 2 weekly quests and a few one-time unique quests. Two of the unique quests unlock **Twinblast** and **Ultraship**.
-- **Tank Index:** lists every tank with its evolution level, the tanks it evolves from and how to unlock it.
+- **Tank Index:** a map of the evolution tree, read left to right, with lines from each tank to the tanks it evolves into. Each tank shows its level and how to unlock it. Drag, scroll or use the arrow keys to pan, and hover a tank to highlight its paths.
 - **Codes:** the real game's codes work here too (HEADSTART, NEWCURRENCY, HAVEFUN, APOLLO, ...).
 - **Rebirth:** at level 150 you can rebirth for gems and +5% XP forever.
 - **Difficulty:** pick Easy, Normal or Hard in the main menu.
