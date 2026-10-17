@@ -148,7 +148,7 @@ T("Ultra-Gunner", 150, ["Ultra-Thunder"],
   [B(angle=a, width=1.2, length=2.0, reload=0.18, dmg=0.6, spread=15, flare=True,
      delay=i * 0.33) for i, a in enumerate((-22, 0, 22))],
   hp=1.2, desc="Three Ultra-Thunders at once.")
-T("Orchestra", 150, ["Trilord", "Side Triple"],
+T("Orchestra", 150, ["Trilord", "Side Triple", "Ultra"],
   [*ring(8, width=0.8, reload=0.6, dmg=0.9),
    B(offset=-0.4, width=0.7, length=2.2, reload=0.5, dmg=0.9),
    B(offset=0.4, width=0.7, length=2.2, reload=0.5, dmg=0.9, delay=0.5)],
@@ -223,6 +223,9 @@ T("Side Triple", 90, ["Triple"],
    B(angle=-90, width=0.75, dmg=0.8, delay=0.5),
    B(angle=90, width=0.75, dmg=0.8, delay=0.5)],
   desc="Triple plus side guns.")
+T("Ultra", 130, ["Triple", "Side Triple"],
+  ring(12, length=1.55, width=0.75, reload=0.8, dmg=0.75),
+  hp=1.3, desc="A dome ringed with twelve cannons.")
 
 # --- Freezer / Flame ------------------------------------------------------
 _FZ = dict(kind="freeze", length=1.6, width=0.9, reload=0.08, dmg=0.12, range=0.3,
