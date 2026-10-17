@@ -76,6 +76,7 @@ PERSONALITIES: dict[str, Personality] = {
             "Triway",
             "Triple",
             "Side Triple",
+            "Ultra",
             "Orchestra",
             "Eater",
             "Devourer",
