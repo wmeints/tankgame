@@ -8,6 +8,9 @@ from ..data import progression as P
 from ..data.tanks import TANKS
 from .bullet import Bullet
 
+MINE_LIFE = 12.0  # seconds a mine lies in wait, times the barrel's range
+MINE_ARM_TIME = 0.6  # seconds before a fresh mine can go off
+
 
 class Tank:
     """A tank with stats, levels, barrels and evolutions, steered by input or a `Brain`."""
@@ -52,6 +55,7 @@ class Tank:
         self.still_time = 0.0
         self.orbit_phase = 0.0
         self.orbiters = []  # Bullet or float (respawn timer)
+        self.mines = []  # mines laid by this tank, oldest first
         self.last_attacker = None
         self.attacked_timer = 0.0
         self.evolutions = []  # names evolved into this run
@@ -271,36 +275,49 @@ class Tank:
             )
         else:
             for _ in range(b["pellets"]):
-                sa = a + math.radians(random.uniform(-b["spread"], b["spread"]) / 2)
-                spd = (
-                    self.bullet_speed
-                    * b["speed"]
-                    * (random.uniform(0.85, 1.1) if b["pellets"] > 1 else 1)
-                )
-                radius = b["width"] * self.radius * 0.5 * b["size"]
-                life = 1.4 * b["range"]
-                if b["kind"] in ("freeze", "flame"):
-                    radius *= 0.6
-                bl = Bullet(
-                    owner=self,
-                    x=mx,
-                    y=my,
-                    vx=math.cos(sa) * spd + self.vx * 0.3,
-                    vy=math.sin(sa) * spd + self.vy * 0.3,
-                    radius=radius,
-                    damage=self.bullet_damage * b["dmg"],
-                    hp=self.bullet_hp * b["bhp"],
-                    life=life,
-                    kind=b["kind"],
-                )
-                if b["kind"] == "rocket":
-                    bl.explode_radius = 70 * b["size"] + self.radius
-                arena.bullets.append(bl)
+                arena.bullets.append(self._make_bullet(b, a, mx, my))
         push = b["recoil"] * b["width"] * 9
         self.kx -= math.cos(a) * push
         self.ky -= math.sin(a) * push
         if self.is_player:
             arena.sfx("shoot" if b["kind"] not in ("freeze", "flame") else None)
+
+    def _make_bullet(self, b, a, mx, my) -> Bullet:
+        """Build one bullet from barrel `b`, fired at angle `a` from muzzle `mx`, `my`."""
+        sa = a + math.radians(random.uniform(-b["spread"], b["spread"]) / 2)
+        spd = (
+            self.bullet_speed * b["speed"] * (random.uniform(0.85, 1.1) if b["pellets"] > 1 else 1)
+        )
+        radius = b["width"] * self.radius * 0.5 * b["size"]
+        if b["kind"] in ("freeze", "flame"):
+            radius *= 0.6
+        bl = Bullet(
+            owner=self,
+            x=mx,
+            y=my,
+            vx=math.cos(sa) * spd + self.vx * 0.3,
+            vy=math.sin(sa) * spd + self.vy * 0.3,
+            radius=radius,
+            damage=self.bullet_damage * b["dmg"],
+            hp=self.bullet_hp * b["bhp"],
+            life=1.4 * b["range"],
+            kind=b["kind"],
+        )
+        if b["kind"] == "rocket":
+            bl.explode_radius = 70 * b["size"] + self.radius
+        elif b["kind"] == "mine":
+            self._lay_mine(bl, b)
+        return bl
+
+    def _lay_mine(self, mine: Bullet, b) -> None:
+        """Prime `mine` from barrel `b` and fizzle the oldest mines beyond the tank's cap."""
+        mine.life = mine.max_life = MINE_LIFE * b["range"]
+        mine.arm = MINE_ARM_TIME
+        mine.explode_radius = 80 * b["size"] + self.radius
+        self.mines = [m for m in self.mines if m.alive]
+        self.mines.append(mine)
+        while len(self.mines) > self.tdef["mines"]:
+            self.mines.pop(0).fizzle()
 
     def take_damage(self, amount: float, source, arena=None, flash=True) -> None:
         """Lose HP unless spawn-immune, and notify the arena if this kills the tank.
@@ -322,8 +339,13 @@ class Tank:
             self.alpha = 1.0
             self.still_time = 0
         if self.hp <= 0:
-            self.alive = False
-            for o in self.orbiters:
-                if isinstance(o, Bullet):
-                    o.alive = False
-            self.arena.on_tank_killed(self, source)
+            self._die(source)
+
+    def _die(self, source) -> None:
+        self.alive = False
+        for o in self.orbiters:
+            if isinstance(o, Bullet):
+                o.alive = False
+        for m in self.mines:
+            m.fizzle()
+        self.arena.on_tank_killed(self, source)

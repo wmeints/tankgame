@@ -15,6 +15,16 @@ def rainbow(t: float):
     return int(r * 255), int(g * 255), int(b * 255)
 
 
+BARREL_COLORS = {
+    "laser": (190, 140, 200),
+    "freeze": (150, 190, 210),
+    "flame": (210, 150, 110),
+    "rocket": (170, 150, 150),
+    "mine": (140, 140, 110),
+}
+MINE_COLOR = (85, 85, 90)
+
+
 def _lighten(color, f):
     return tuple(min(255, int(c + (255 - c) * f)) for c in color)
 
@@ -72,16 +82,7 @@ def draw_tank_body(surf, tdef, pose, color, spin=0.0, flash=False):
             (tx - px * w1, ty - py * w1),
             (bx - px * w0, by - py * w0),
         ]
-        col = barrel_col
-        if b["kind"] == "laser":
-            col = (190, 140, 200)
-        elif b["kind"] == "freeze":
-            col = (150, 190, 210)
-        elif b["kind"] == "flame":
-            col = (210, 150, 110)
-        elif b["kind"] == "rocket":
-            col = (170, 150, 150)
-        poly(surf, col, pts, ow)
+        poly(surf, BARREL_COLORS.get(b["kind"], barrel_col), pts, ow)
     body = _lighten(color, 0.6) if flash else color
     circle(surf, body, (x, y), r, ow)
 
@@ -186,6 +187,8 @@ def draw_bullet(surf, cam, b, color):
         tail = (sx - math.cos(a) * r * 2, sy - math.sin(a) * r * 2)
         pygame.draw.line(surf, C.FLAME_COLOR, (sx, sy), tail, max(2, int(r)))
         circle(surf, color, (sx, sy), r, ow)
+    elif b.kind == "mine":
+        _draw_mine(surf, (sx, sy), r, b, color)
     elif b.kind == "orbiter":
         a = b.owner.orbit_phase * 2
         pts = [
@@ -198,6 +201,26 @@ def draw_bullet(surf, cam, b, color):
         poly(surf, color, pts, ow)
     else:
         circle(surf, color, (sx, sy), r, ow)
+
+
+def _draw_mine(surf, center, r, b, color):
+    """Draw a studded mine with a blinking light; armed enemy mines fade into the floor."""
+    shell, light = MINE_COLOR, color
+    if b.arm <= 0 and not b.owner.is_player:
+        shell, light = (_blend(c, C.BG, 0.75) for c in (shell, color))
+    sx, sy = center
+    ow = max(1, int(r * 0.15))
+    for i in range(6):
+        a = i * math.tau / 6
+        stud = (sx + math.cos(a) * r * 1.15, sy + math.sin(a) * r * 1.15)
+        pygame.draw.circle(surf, shell, stud, max(1, r * 0.28))
+    circle(surf, shell, center, r, ow)
+    if b.arm > 0 or int(b.life * 2) % 2 == 0:
+        pygame.draw.circle(surf, light, center, max(1, r * 0.4))
+
+
+def _blend(color, toward, f):
+    return tuple(int(c + (t - c) * f) for c, t in zip(color, toward, strict=True))
 
 
 def draw_tank(surf, cam, t, color, time):

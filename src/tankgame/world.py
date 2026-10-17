@@ -15,7 +15,7 @@ from .entities.shape import Shape
 from .entities.tank import Tank
 from .spatial import Grid
 
-BULLET_VS_BULLET = {"bullet", "spike", "rocket", "orbiter"}
+BULLET_VS_BULLET = {"bullet", "spike", "rocket", "orbiter", "mine"}
 
 
 class World:
@@ -252,7 +252,7 @@ class World:
             self.sfx("shoot")
 
     def explode(self, b):
-        """Explode a rocket, damaging everything within its blast radius."""
+        """Explode a rocket or mine, damaging everything within its blast radius."""
         self.rings.append(Ring(b.x, b.y, b.explode_radius, C.FLAME_COLOR, 0.3))
         for e in self.solids.query_unique(b.x, b.y, b.explode_radius):
             if e is b.owner or not e.alive:
@@ -282,6 +282,7 @@ class World:
         self._think(dt)
         self._move(dt)
         self.collide(dt)
+        self._detonate()
         self._remove_expired(dt)
         self._refill_shapes(dt)
         self._respawn_bots(dt)
@@ -310,11 +311,15 @@ class World:
             if b.alive and b.kind == "orbiter" and not b.owner.alive:
                 b.alive = False
             b.update(dt)
-            if not b.alive and b.kind == "rocket" and b.explode_radius:
-                self.explode(b)
-                b.explode_radius = 0
         for s in self.shapes:
             s.update(dt)
+
+    def _detonate(self):
+        """Explode bullets that died with a primed blast: expired rockets, shot-down mines."""
+        for b in self.bullets:
+            if not b.alive and b.explode_radius:
+                self.explode(b)
+                b.explode_radius = 0
 
     def _remove_expired(self, dt):
         self.tanks = [t for t in self.tanks if t.alive or t.is_player]
@@ -415,11 +420,11 @@ class World:
         dx, dy = e.x - b.x, e.y - b.y
         if dx * dx + dy * dy > rr * rr:
             return
-        if e.is_tank and e.immune > 0:
+        if (e.is_tank and e.immune > 0) or b.arm > 0:
             return
         if not self._first_contact(b, e):
             return
-        if b.kind == "rocket":
+        if b.explode_radius:
             self.explode(b)
             b.explode_radius = 0
             b.alive = False
