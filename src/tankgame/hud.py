@@ -150,11 +150,8 @@ class Hud:
         ui.text(surf, f"Score: {int(p.score):,}", 22, score_rect.center, anchor="center")
         lvl_rect = pygame.Rect(0, 0, 480, 28)
         lvl_rect.midbottom = (cx, C.SCREEN_H - 12)
-        if p.level >= P.MAX_LEVEL:
-            frac = 1.0
-        else:
-            lo, hi = P.total_xp_for_level(p.level), P.total_xp_for_level(p.level + 1)
-            frac = (p.score - lo) / (hi - lo)
+        lo, hi = P.total_xp_for_level(p.level), P.total_xp_for_level(p.level + 1)
+        frac = (p.score - lo) / (hi - lo)
         ui.bar(surf, lvl_rect, frac, C.XP_YELLOW)
         ui.text(surf, f"Lvl {p.level} {p.tank_name}", 24, lvl_rect.center, anchor="center")
 

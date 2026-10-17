@@ -174,7 +174,7 @@ def random_name() -> str:
 
 def bot_level(difficulty: str, player_level: int) -> int:
     """Return a random spawn level for a bot, skewed low and capped relative to the player."""
-    top = min(P.MAX_LEVEL, max(20, player_level + DIFFICULTY[difficulty]["above"]))
+    top = max(20, player_level + DIFFICULTY[difficulty]["above"])
     return 1 + int((top - 1) * random.random() ** 1.6)
 
 

@@ -3,10 +3,12 @@
 Numbers the original Roblox game publishes (stat names, base caps, evolution
 levels, rebirth at 150, Railgun price) are copied. Numbers it does not publish
 (XP curve, per-point effects, shape values) are based on Diep.io, which the
-original clones, and scaled up to a 150 level cap.
+original clones, and scaled up to 150 levels. Levels past 150 have no cap; the
+XP curve and stat points just keep going.
 """
 
-MAX_LEVEL = 150
+import bisect
+
 REBIRTH_LEVEL = 150
 
 
@@ -15,22 +17,25 @@ def xp_to_next(level: int) -> int:
     return round(4 * level**1.6 + 10)
 
 
-_TOTAL_XP = [0, 0]  # index = level, value = total score needed to reach it
-for _lvl in range(1, MAX_LEVEL):
-    _TOTAL_XP.append(_TOTAL_XP[-1] + xp_to_next(_lvl))
+_TOTAL_XP = [0, 0]  # index = level, value = total score needed to reach it; grown on demand
+
+
+def _grow_until(done) -> None:
+    while not done():
+        _TOTAL_XP.append(_TOTAL_XP[-1] + xp_to_next(len(_TOTAL_XP) - 1))
 
 
 def total_xp_for_level(level: int) -> int:
-    """Return the total score needed to reach `level` (clamped to 1..MAX_LEVEL)."""
-    return _TOTAL_XP[max(1, min(level, MAX_LEVEL))]
+    """Return the total score needed to reach `level` (levels below 1 count as 1)."""
+    level = max(1, level)
+    _grow_until(lambda: len(_TOTAL_XP) > level)
+    return _TOTAL_XP[level]
 
 
 def level_for_xp(xp: float) -> int:
-    """Return the level reached with a total score of `xp`."""
-    level = 1
-    while level < MAX_LEVEL and xp >= _TOTAL_XP[level + 1]:
-        level += 1
-    return level
+    """Return the level reached with a total score of `xp`. Levels have no cap."""
+    _grow_until(lambda: _TOTAL_XP[-1] > xp)
+    return max(1, bisect.bisect_right(_TOTAL_XP, xp) - 1)
 
 
 def stat_points_for_level(level: int) -> int:
