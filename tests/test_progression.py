@@ -23,20 +23,11 @@ def test_level_for_xp_round_trip():
 def test_stat_points_allow_full_build_only_with_caps():
     total = P.stat_points_for_level(P.MAX_LEVEL)
     assert total > P.BASE_CAP * len(P.STATS)  # more than base caps hold
-    assert total <= sum(P.MAX_CAPS.values())  # max caps can hold everything
 
 
-def test_max_caps_match_original():
-    assert P.MAX_CAPS == {
-        "dmg": 12,
-        "bspd": 13,
-        "reload": 12,
-        "bhp": 11,
-        "maxhp": 12,
-        "regen": 11,
-        "speed": 13,
-        "body": 12,
-    }
+def test_cap_upgrades_get_more_expensive():
+    costs = [P.cap_upgrade_cost(n) for n in range(1, 20)]
+    assert all(a < b for a, b in itertools.pairwise(costs))
 
 
 def test_ranks():

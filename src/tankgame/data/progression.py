@@ -1,6 +1,6 @@
 """Levels, XP, stats, shapes, gems, ranks and quests.
 
-Numbers the original Roblox game publishes (stat names, max caps, evolution
+Numbers the original Roblox game publishes (stat names, base caps, evolution
 levels, rebirth at 150, Railgun price) are copied. Numbers it does not publish
 (XP curve, per-point effects, shape values) are based on Diep.io, which the
 original clones, and scaled up to a 150 level cap.
@@ -68,21 +68,13 @@ STAT_COLORS = {
     "body": (150, 240, 110),
 }
 BASE_CAP = 7
-# Highest caps reachable by buying upgrades (from the original game's wiki).
-MAX_CAPS = {
-    "dmg": 12,
-    "bspd": 13,
-    "reload": 12,
-    "bhp": 11,
-    "maxhp": 12,
-    "regen": 11,
-    "speed": 13,
-    "body": 12,
-}
 
 
 def cap_upgrade_cost(n: int) -> int:
-    """Gem cost of the n-th (1-based) cap upgrade for one stat."""
+    """Gem cost of the n-th (1-based) cap upgrade for one stat.
+
+    Caps have no ceiling; the doubling cost is what limits them.
+    """
     return 2500 * 2 ** (n - 1)
 
 

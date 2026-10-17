@@ -27,12 +27,15 @@ def test_old_save_migrates(tmp_path):
     assert prof["version"] == save.SAVE_VERSION
 
 
-def test_cap_purchase_limits():
+def test_caps_have_no_ceiling_but_cost_gems():
     prof = fresh()
-    prof["gems"] = 10**9
-    while meta.buy_cap(prof, "bhp"):
-        pass
-    assert meta.stat_cap(prof, "bhp") == P.MAX_CAPS["bhp"]
+    prof["gems"] = 10**12
+    for _ in range(20):
+        assert meta.buy_cap(prof, "bhp")
+    assert meta.stat_cap(prof, "bhp") == P.BASE_CAP + 20
+    prof["gems"] = meta.next_cap_cost(prof, "bhp") - 1
+    assert not meta.buy_cap(prof, "bhp")
+    assert meta.stat_cap(prof, "bhp") == P.BASE_CAP + 20
 
 
 def test_codes_once():

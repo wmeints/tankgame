@@ -181,7 +181,7 @@ def bot_level(difficulty: str, player_level: int) -> int:
 def bot_caps(difficulty: str) -> dict:
     """Return a bot's stat caps, with Movement Speed and Fire Rate held to the difficulty's pace."""
     d = DIFFICULTY[difficulty]
-    caps = {s: max(5, min(P.MAX_CAPS[s], P.BASE_CAP + d["caps"])) for s in P.STATS}
+    caps = {s: max(5, P.BASE_CAP + d["caps"]) for s in P.STATS}
     for s in PACE_STATS:
         caps[s] = min(caps[s], d["pace"])
     return caps

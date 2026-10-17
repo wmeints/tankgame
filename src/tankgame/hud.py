@@ -168,16 +168,10 @@ class Hud:
         for i, stat in enumerate(P.STATS):
             y = rect.y + 40 + i * 30
             col = P.STAT_COLORS[stat]
-            maxc = P.MAX_CAPS[stat]
-            seg_w = 170 / maxc
-            for k in range(maxc):
+            seg_w = 170 / p.caps[stat]
+            for k in range(p.caps[stat]):
                 r = pygame.Rect(rect.x + 12 + k * seg_w, y, seg_w - 2, 22)
-                if k < p.points[stat]:
-                    c = col
-                elif k < p.caps[stat]:
-                    c = (70, 70, 80)
-                else:
-                    c = (35, 35, 40)  # locked: buy in the shop
+                c = col if k < p.points[stat] else (70, 70, 80)
                 pygame.draw.rect(surf, c, r, border_radius=3)
             ui.text(surf, f"{P.STAT_NAMES[stat]}", 18, (rect.x + 16, y + 4))
             ui.text(surf, f"[{i + 1}]", 18, (rect.x + 192, y + 4), (200, 200, 200))

@@ -115,17 +115,15 @@ def stat_cap(profile: dict, stat: str) -> int:
     return P.BASE_CAP + profile["caps"][stat]
 
 
-def next_cap_cost(profile: dict, stat: str) -> int | None:
-    """Return the gem cost of the next cap upgrade for a stat, or None if maxed."""
-    if stat_cap(profile, stat) >= P.MAX_CAPS[stat]:
-        return None
+def next_cap_cost(profile: dict, stat: str) -> int:
+    """Return the gem cost of the next cap upgrade for a stat."""
     return P.cap_upgrade_cost(profile["caps"][stat] + 1)
 
 
 def buy_cap(profile: dict, stat: str) -> bool:
     """Buy the next cap upgrade for a stat. Return whether it was bought."""
     cost = next_cap_cost(profile, stat)
-    if cost is None or profile["gems"] < cost:
+    if profile["gems"] < cost:
         return False
     profile["gems"] -= cost
     profile["caps"][stat] += 1

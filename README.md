@@ -59,7 +59,7 @@ uv run tankgame
 - **Evolving:** you evolve at levels 15, 30, 42, 60, 80, 90, 105, 130 and 150. The Freezer and Grinder branches also use levels 35, 37, 47 and 55.
 - **Dying:** when you die the run starts over, but your gems are saved.
 - **Gems:** you earn them by destroying tanks, from shiny shapes and quests, and a few at the end of each run. Spend them in the **Shop**:
-  - **Stat Caps** raise the maximum points per stat, from 7 up to the original's maximum (Damage 12, Bullet Speed 13, ...).
+  - **Stat Caps** raise the maximum points per stat, from 7 upwards with no ceiling. Each raise of a stat costs twice as many gems as the one before.
   - **Tanks** unlock shop-only evolutions such as Ultra-Thunder, Machinima, Double Buckshot, Smashinator and Railgun (75,000 gems, like the original).
   - **Skins** change your tank color.
 - **Ranks:** your total score across all runs raises your rank. Rank 10 unlocks **Blast Lord**.

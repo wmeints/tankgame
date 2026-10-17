@@ -52,13 +52,12 @@ class ShopScene(BackScene):
             for i, stat in enumerate(P.STATS):
                 y = 190 + i * 62
                 cost = meta.next_cap_cost(prof, stat)
-                label = "MAXED" if cost is None else f"{cost:,}"
                 b = ui.Button(
                     (C.SCREEN_W - 380, y, 220, 48),
-                    label,
+                    f"{cost:,}",
                     lambda s=stat: self.buy_cap(s),
                     size=28,
-                    enabled=cost is not None and prof["gems"] >= cost,
+                    enabled=prof["gems"] >= cost,
                     color=(80, 200, 100),
                 )
                 self.buttons.append(b)
@@ -177,11 +176,11 @@ class ShopScene(BackScene):
                 ui.panel(surf, row, alpha=190)
                 ui.text(surf, P.STAT_NAMES[stat], 28, (row.x + 16, row.y + 16))
                 cap = meta.stat_cap(prof, stat)
-                for k in range(P.MAX_CAPS[stat]):
-                    r = pygame.Rect(row.x + 220 + k * 34, row.y + 14, 30, 28)
-                    c = P.STAT_COLORS[stat] if k < cap else (40, 40, 45)
-                    pygame.draw.rect(surf, c, r, border_radius=4)
-                ui.text(surf, f"{cap}/{P.MAX_CAPS[stat]}", 26, (row.x + 670, row.y + 16))
+                seg_w = min(34, 440 / cap)
+                for k in range(cap):
+                    r = pygame.Rect(row.x + 220 + k * seg_w, row.y + 14, seg_w - 4, 28)
+                    pygame.draw.rect(surf, P.STAT_COLORS[stat], r, border_radius=4)
+                ui.text(surf, f"Cap {cap}", 26, (row.x + 670, row.y + 16))
         elif self.tab == 1:
             for i, name in enumerate(SHOP_TANKS):
                 t = TANKS[name]
