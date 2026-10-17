@@ -27,6 +27,7 @@ class Bullet:
     cooldowns: dict = field(default_factory=dict, init=False)  # orbiters: target id -> cooldown
     slot: int = field(default=0, init=False)  # orbiters: slot index
     explode_radius: float = field(default=0.0, init=False)
+    arm: float = field(default=0.0, init=False)  # mines: seconds until armed
 
     def __post_init__(self):
         """Remember the starting HP and lifetime."""
@@ -36,8 +37,9 @@ class Bullet:
     def update(self, dt: float) -> None:
         """Advance one step.
 
-        Orbiters circle their owner, rockets accelerate, freeze and flame particles
-        slow down and grow, and everything else flies straight until its life runs out.
+        Orbiters circle their owner, rockets accelerate, mines brake to a stop and arm,
+        freeze and flame particles slow down and grow, and everything else flies
+        straight until its life runs out. Mines that run out fizzle without exploding.
         """
         if self.kind == "orbiter":
             o = self.owner
@@ -60,6 +62,11 @@ class Bullet:
             if sp > 1400:
                 self.vx *= 1400 / sp
                 self.vy *= 1400 / sp
+        elif self.kind == "mine":
+            drag = math.exp(-6 * dt)
+            self.vx *= drag
+            self.vy *= drag
+            self.arm = max(0.0, self.arm - dt)
         elif self.kind in ("freeze", "flame"):
             self.vx *= 1 - 2.5 * dt
             self.vy *= 1 - 2.5 * dt
@@ -68,7 +75,14 @@ class Bullet:
         self.y += self.vy * dt
         self.life -= dt
         if self.life <= 0:
+            if self.kind == "mine":
+                self.fizzle()
             self.alive = False
+
+    def fizzle(self) -> None:
+        """Remove the bullet without letting it explode."""
+        self.explode_radius = 0.0
+        self.alive = False
 
 
 class Beam:

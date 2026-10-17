@@ -80,7 +80,16 @@ def _frost_hit(w, tank, damage):
     shooter = w.tanks[2]
     shooter.immune = tank.immune = 0
     bullet = SimpleNamespace(
-        kind="freeze", damage=damage, owner=shooter, x=tank.x, y=tank.y, radius=5, hp=1, hit=set()
+        kind="freeze",
+        damage=damage,
+        owner=shooter,
+        x=tank.x,
+        y=tank.y,
+        radius=5,
+        hp=1,
+        hit=set(),
+        arm=0,
+        explode_radius=0,
     )
     w._bullet_hit(bullet, tank)
 

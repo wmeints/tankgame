@@ -110,6 +110,21 @@ PERSONALITIES: dict[str, Personality] = {
         stats=["dmg", "reload", "bspd", "maxhp", "speed", "bhp", "regen", "body"],
         distance=300,
     ),
+    "trapper": Personality(
+        tanks=[
+            "Doomsday",
+            "Warden",
+            "Sapper",
+            "Minefield",
+            "Mine Layer",
+            "Slide",
+            "Guardian",
+            "Double",
+            "Triple",
+        ],
+        stats=["dmg", "bhp", "reload", "maxhp", "speed", "regen", "bspd", "body"],
+        distance=420,
+    ),
 }
 STAT_WEIGHTS = [5, 4, 4, 3, 2, 2, 1, 1]
 

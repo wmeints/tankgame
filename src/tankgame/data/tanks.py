@@ -11,12 +11,16 @@ Barrel fields (lengths/widths are relative to the tank radius):
   offset   sideways shift (positive = right of the aim direction)
   dmg, reload, speed, bhp, range   multipliers on the tank's stats
   spread   random spread in degrees
-  kind     bullet | spike | rocket | laser | freeze | flame
+  kind     bullet | spike | rocket | laser | freeze | flame | mine
   delay    fraction of the reload to wait before the first shot (staggering)
   pellets  bullets per shot (shotguns)
   size     bullet size multiplier
   recoil   push back on the tank per shot
   flare    draw as a trapezoid that widens toward the muzzle
+
+Tank fields besides the barrels are multipliers (hp, speed, body, fov) or counts:
+orbiters and grinder blades, and `mines`, the most mines a tank can have laid at
+once (laying another clears its oldest).
 """
 
 ANY = "*"  # parent wildcard: available from any tank of level 15 or higher
@@ -36,12 +40,12 @@ TANKS: dict[str, dict] = {}
 
 
 def T(name, level, parents, barrels, hp=1.0, speed=1.0, body=1.0, price=0,
-      unlock=None, fov=1.0, orbiters=0, grinder=0, invis=False, desc=""):
+      unlock=None, fov=1.0, orbiters=0, grinder=0, invis=False, mines=0, desc=""):
     """Register a tank definition in `TANKS`."""
     TANKS[name] = dict(name=name, level=level, parents=list(parents),
                        barrels=barrels, hp=hp, speed=speed, body=body,
                        price=price, unlock=unlock, fov=fov, orbiters=orbiters,
-                       grinder=grinder, invis=invis, desc=desc)
+                       grinder=grinder, invis=invis, mines=mines, desc=desc)
 
 
 def fan(n, total_angle, **kw):
@@ -64,6 +68,13 @@ def thrusters(**kw):
               recoil=2.5, range=0.6, delay=0.0, **kw),
             B(angle=200, length=1.6, width=0.7, dmg=0.35, reload=0.6,
               recoil=2.5, range=0.6, delay=0.5, **kw)]
+
+
+def dropper(angle=180.0, **kw):
+    """Return a stubby mine-laying barrel, facing backwards unless `angle` says otherwise."""
+    kw = dict(length=1.45, width=1.1, reload=2.2, dmg=3.0, speed=0.45, spread=8,
+              recoil=0.2, bhp=2.0) | kw
+    return B(kind="mine", angle=angle, **kw)
 
 
 # --- Start ----------------------------------------------------------------
@@ -292,6 +303,27 @@ T("Side Orbitron", 130, ["Orbitron Jr.", "Orbitron"],
 T("Orbitron Sr.", 150, ["Orbitron", "Side Orbitron"],
   [B(offset=-0.45, width=0.75, dmg=1.1), B(offset=0.45, width=0.75, dmg=1.1, delay=0.5)],
   orbiters=8, hp=1.25, desc="A ring of eight drones.")
+
+# --- Mine line (any branch) ----------------------------------------------
+T("Mine Layer", 60, [ANY], [B(dmg=1.1), dropper()], mines=6,
+  desc="Leaves a trail of mines behind it.")
+T("Minefield", 80, ["Mine Layer"],
+  [B(dmg=1.1), dropper(150), dropper(210, delay=0.5)], mines=10,
+  desc="Two droppers sow a minefield.")
+T("Sapper", 105, ["Minefield"],
+  [B(kind="rocket", width=1.0, length=1.9, reload=1.4, dmg=2.2, speed=0.55, range=1.4,
+     recoil=2),
+   dropper(width=1.3, size=1.4, dmg=4.5, reload=2.6)],
+  mines=8, desc="Rockets up front, heavy mines behind.")
+T("Warden", 130, ["Minefield"],
+  [B(dmg=1.2), *(dropper(a, delay=i * 0.25) for i, a in enumerate((45, 135, 225, 315)))],
+  hp=1.2, mines=16, desc="Fences itself in with mines.")
+T("Doomsday", 150, ["Warden", "Sapper"],
+  [*(B(kind="rocket", angle=a, width=1.0, length=1.9, reload=1.3, dmg=2.4, speed=0.6,
+       range=1.5, recoil=1.5, delay=i * 0.33) for i, a in enumerate((-20, 0, 20))),
+   *(dropper(a, size=1.3, dmg=4.0, delay=i * 0.2)
+     for i, a in enumerate((108, 144, 180, 216, 252)))],
+  hp=1.25, mines=20, desc="Rocket barrages and a carpet of mines.")
 
 # --- Special --------------------------------------------------------------
 T("Ultraship", 60, [ANY],
